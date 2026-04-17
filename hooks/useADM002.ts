@@ -31,7 +31,7 @@ export function useEmployeeList() {
   const [ordEndDate, setOrdEndDate] = useState<SortOrder>('ASC');
   const [activeSortField, setActiveSortField] = useState<SortField | null>(null);
   const [departments, setDepartments] = useState<DepartmentDTO[]>([]);
-  const limit = 20;
+  const limit = 24;
   const totalPages = Math.ceil(totalRecords / limit);
 
   const toggleSortOrder = (value: SortOrder): SortOrder => (
