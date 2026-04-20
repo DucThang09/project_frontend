@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@/hooks/useAuth';
-import EmployeeConfirm from '@/components/employees/EmployeeConfirm';
+import EmployeeConfirm from '@/components/EmployeeConfirm';
 
 export default function EmployeeConfirmPage() {
   useAuth();

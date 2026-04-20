@@ -1,10 +1,10 @@
 'use client';
 
 import { useAuth } from '@/hooks/useAuth';
-import EmployeeEdit from '@/components/employees/EmployeeEdit';
+import EmployeeInputForm from '@/components/EmployeeInputForm';
 
 export default function EmployeeEditPage() {
   useAuth();
 
-  return <EmployeeEdit />;
+  return <EmployeeInputForm />;
 }

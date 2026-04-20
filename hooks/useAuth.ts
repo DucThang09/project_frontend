@@ -3,13 +3,13 @@ import { useRouter } from 'next/navigation';
 import { getToken, isTokenExpired } from '@/lib/auth/token';
 
 /**
- * Hook bảo vệ các màn hình yêu cầu đăng nhập.
+ * Hook báº£o vá»‡ cÃ¡c mÃ n hÃ¬nh yÃªu cáº§u Ä‘Äƒng nháº­p.
  */
 const useAuth = () => {
   const router = useRouter();
 
   useEffect(() => {
-    // Chỉ cho vào màn hình bảo vệ khi còn token hợp lệ.
+    // Chá»‰ cho vÃ o mÃ n hÃ¬nh báº£o vá»‡ khi cÃ²n token há»£p lá»‡.
     const token = getToken();
     if (!token || isTokenExpired(token?.accessToken)) {
       router.push('/login');
@@ -18,16 +18,16 @@ const useAuth = () => {
 };
 
 /**
- * Hook chặn người dùng đã đăng nhập truy cập lại màn hình login.
+ * Hook cháº·n ngÆ°á»i dÃ¹ng Ä‘Ã£ Ä‘Äƒng nháº­p truy cáº­p láº¡i mÃ n hÃ¬nh login.
  */
 const useGuest = () => {
   const router = useRouter();
 
   useEffect(() => {
-    // Nếu đã đăng nhập rồi thì không cần ở lại màn hình login.
+    // Náº¿u Ä‘Ã£ Ä‘Äƒng nháº­p rá»“i thÃ¬ khÃ´ng cáº§n á»Ÿ láº¡i mÃ n hÃ¬nh login.
     const token = getToken();
     if (token && !isTokenExpired(token?.accessToken)) {
-      router.push('/employees/list');
+      router.push('/employees/adm002');
     }
   }, [router]);
 };

@@ -1,89 +1,89 @@
-// types/employee.ts
+// Kiểu sắp xếp hỗ trợ ở màn hình danh sách.
+export type SortOrder = 'ASC' | 'DESC';
 
-// Backend/Database representation
-export interface EmployeeDB {
-  employee_id: number;
-  department_id: number;
-  employee_name: string; // Required
-  employee_name_kana?: string;
-  employee_birth_date?: string; // DATE format
-  employee_email: string; // Required
-  employee_telephone?: string;
-  employee_login_id: string; // Required, links to login users
-  employee_login_password?: string; // Not managed by frontend
+// Dữ liệu một bản ghi nhân viên trả về từ API.
+export interface EmployeeDTO {
+  readonly employeeId: number;
+  readonly employeeName: string;
+  readonly employeeBirthDate: string | null;
+  readonly departmentName: string | null;
+  readonly employeeEmail: string;
+  readonly employeeTelephone: string | null;
+  readonly certificationName: string | null;
+  readonly endDate: string | null;
+  readonly score: number | null;
 }
 
-// Frontend display representation (as shown in UI)
-export interface Employee {
-  id: string; // Maps to employee_id
-  name: string; // Maps to employee_name (Required)
-  nameKana?: string; // Maps to employee_name_kana
-  dateOfBirth?: string; // Maps to employee_birth_date (YYYY-MM-DD)
-  group?: string; // Derived from department_id via department lookup
-  email: string; // Maps to employee_email (Required)
-  phone?: string; // Maps to employee_telephone
-  japaneseProficiency?: string; // Derived from certifications
-  expirationDate?: string; // Derived from employees_certifications.end_date (YYYY-MM-DD)
-  score?: number; // Derived from employees_certifications.score
+// Mã message và tham số đi kèm từ backend.
+export interface ApiMessage {
+  readonly code: string;
+  readonly params: string[];
 }
 
-// API request/response types
-export interface EmployeeCreateRequest {
-  employee_name: string; // Required
-  department_id: number; // Required
-  employee_email: string; // Required
-  employee_name_kana?: string;
-  employee_birth_date?: string; // DATE format
-  employee_telephone?: string;
-  employee_login_id: string; // Required
-  // Note: employee_login_password not included (managed separately)
+// Cấu trúc response của API danh sách nhân viên.
+export interface EmployeeListApiResponse {
+  readonly code: number;
+  readonly totalRecords: number;
+  readonly employees: EmployeeDTO[];
+  readonly message?: ApiMessage;
 }
 
-export interface EmployeeUpdateRequest {
-  employee_id: number; // Required for PUT /employee (ID in request body, not path)
-  employee_name: string; // Required
-  department_id: number; // Required
-  employee_email: string; // Required
-  employee_name_kana?: string;
-  employee_birth_date?: string;
-  employee_telephone?: string;
-  employee_login_id: string; // Required
-}
-
-export interface EmployeeListResponse {
-  employees: Employee[]; // Frontend display format
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
+// Điều kiện tìm kiếm danh sách nhân viên.
 export interface EmployeeSearchParams {
-  name?: string; // Searches employee_name
-  group?: string; // Filters by department_id (via department lookup)
-  page?: number;
+  employee_name?: string;
+  department_id?: number;
+  ord_employee_name?: SortOrder;
+  ord_certification_name?: SortOrder;
+  ord_end_date?: SortOrder;
+  offset?: number;
   limit?: number;
 }
 
-// types/department.ts
-export interface Department {
-  department_id: number;
-  department_name: string;
+// Dữ liệu form cho màn thêm/sửa nhân viên.
+export interface EmployeeFormValues {
+  employeeLoginId: string;
+  departmentId: string;
+  employeeName: string;
+  employeeNameKana: string;
+  employeeBirthDate: Date | null;
+  employeeEmail: string;
+  employeeTelephone: string;
+  employeeLoginPassword: string;
+  employeeLoginPasswordConfirm: string;
+  certificationId: string;
+  certificationStartDate: Date | null;
+  certificationEndDate: Date | null;
+  score: string;
 }
 
-// types/certification.ts
-export interface Certification {
-  certification_id: number;
-  certification_name: string;
-  certification_level: number;
+// Dữ liệu tạm lưu của màn add trước khi sang confirm.
+export interface EmployeeAddDraft {
+  employeeLoginId: string;
+  departmentId: string;
+  employeeName: string;
+  employeeNameKana: string;
+  employeeBirthDate: string | null;
+  employeeEmail: string;
+  employeeTelephone: string;
+  employeeLoginPassword: string;
+  employeeLoginPasswordConfirm: string;
+  certificationId: string;
+  certificationStartDate: string | null;
+  certificationEndDate: string | null;
+  score: string;
 }
 
-export interface EmployeeCertification {
-  employee_certification_id: number;
-  employee_id: number;
-  certification_id: number;
-  start_date: string; // DATE format
-  end_date: string; // DATE format
-  score: number; // DECIMAL
+// Dữ liệu hiển thị ở màn confirm add employee.
+export interface EmployeeConfirmData {
+  employeeLoginId: string;
+  departmentName: string;
+  employeeName: string;
+  employeeNameKana: string;
+  employeeBirthDate: string;
+  employeeEmail: string;
+  employeeTelephone: string;
+  certificationName: string;
+  certificationStartDate: string;
+  certificationEndDate: string;
+  score: string;
 }
-

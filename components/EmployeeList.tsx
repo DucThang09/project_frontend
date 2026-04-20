@@ -1,21 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import React, { JSX } from 'react';
+import React from 'react';
 import { useEmployeeList } from '@/hooks/useADM002';
 
 /**
- * Màn hình hiển thị danh sách nhân viên.
+ * 社員一覧画面。
  */
 export default function EmployeeList() {
   const {
     employees,
     loading,
     emptyMessage,
-    searchName,
-    setSearchName,
-    searchGroup,
-    setSearchGroup,
+    register,
     currentPage,
     setCurrentPage,
     departments,
@@ -115,16 +112,15 @@ export default function EmployeeList() {
           会員名称で会員を検索します。検索条件無しの場合は全て表示されます。
         </h1>
 
-        <form className="c-form">
+        <form className="c-form" onSubmit={handleSearch}>
           <ul className="d-flex">
             <li className="form-group row">
               <label className="col-form-label">氏名:</label>
               <div className="col-sm">
                 <input
                   type="text"
-                  value={searchName}
                   maxLength={125}
-                  onChange={(e) => setSearchName(e.target.value.slice(0, 125))}
+                  {...register('employeeName')}
                 />
               </div>
             </li>
@@ -132,10 +128,7 @@ export default function EmployeeList() {
             <li className="form-group row">
               <label className="col-form-label">グループ:</label>
               <div className="col-sm">
-                <select
-                  value={searchGroup}
-                  onChange={(e) => setSearchGroup(e.target.value)}
-                >
+                <select {...register('departmentId')}>
                   <option value="">全て</option>
                   {departments.map((department) => (
                     <option
@@ -152,8 +145,7 @@ export default function EmployeeList() {
             <li className="form-group row">
               <div className="btn-group">
                 <button
-                  type="button"
-                  onClick={handleSearch}
+                  type="submit"
                   className="btn btn-primary btn-sm"
                 >
                   検索
@@ -231,7 +223,7 @@ export default function EmployeeList() {
               employees.map((employee) => (
                 <React.Fragment key={employee.employeeId}>
                   <div className="bor-l-none text-center">
-                    <Link href={`/employees/detail?id=${employee.employeeId}`}>
+                    <Link href={`/employees/adm003?id=${employee.employeeId}`}>
                       {employee.employeeId}
                     </Link>
                   </div>

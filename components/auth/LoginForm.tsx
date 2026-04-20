@@ -17,7 +17,7 @@ export default function LoginForm() {
     try {
       const response = await apiClient.post<{ accessToken: string; tokenType: string }>('/login', data);
       storeToken(response.data.accessToken, response.data.tokenType);
-      router.push('/employees/list');
+      router.push('/employees/adm002');
     } catch (error) {
       console.error('Login failed:', error);
       setError('root', {
@@ -40,10 +40,10 @@ export default function LoginForm() {
       )}
 
       <div className="wrap-input100 validate-input">
-        <input 
-          className="input100" 
-          type="text" 
-          placeholder="アカウント名:" 
+        <input
+          className="input100"
+          type="text"
+          placeholder="アカウント名:"
           {...register('username')}
         />
         <span className="focus-input100"></span>
@@ -54,10 +54,10 @@ export default function LoginForm() {
       {errors.username && <span className="login100-form-title err" style={{ fontSize: '12px', paddingBottom: '10px' }}>{errors.username.message}</span>}
 
       <div className="wrap-input100 validate-input">
-        <input 
-          className="input100" 
-          type="password" 
-          placeholder="パスワード:" 
+        <input
+          className="input100"
+          type="password"
+          placeholder="パスワード:"
           {...register('password')}
         />
         <span className="focus-input100"></span>
@@ -75,4 +75,3 @@ export default function LoginForm() {
     </form>
   );
 }
-
