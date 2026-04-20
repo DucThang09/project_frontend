@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import React from 'react';
+import React, { JSX } from 'react';
 import { useEmployeeList } from '@/hooks/useADM002';
 
 /**
@@ -30,11 +30,6 @@ export default function EmployeeList() {
     handleAddNew,
   } = useEmployeeList();
 
-  /**
-   * Hiển thị khu vực phân trang.
-   *
-   * @returns Giao diện phân trang hoặc null nếu chỉ có một trang.
-   */
   const renderPagination = () => {
     if (paginationPages.length === 0) {
       return null;
@@ -128,7 +123,6 @@ export default function EmployeeList() {
                 <input
                   type="text"
                   value={searchName}
-                  // Giới hạn đúng 125 ký tự theo yêu cầu màn hình.
                   maxLength={125}
                   onChange={(e) => setSearchName(e.target.value.slice(0, 125))}
                 />

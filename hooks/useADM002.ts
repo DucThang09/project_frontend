@@ -16,6 +16,7 @@ import { getDepartments, DepartmentDTO } from '@/lib/api/department.api';
 export function useEmployeeList() {
   const router = useRouter();
   type SortField = 'employee_name' | 'certification_name' | 'end_date';
+  type SortState = Record<SortField, boolean>;
 
   const [employees, setEmployees] = useState<EmployeeDTO[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
@@ -29,20 +30,65 @@ export function useEmployeeList() {
   const [ordEmployeeName, setOrdEmployeeName] = useState<SortOrder>('ASC');
   const [ordCertificationName, setOrdCertificationName] = useState<SortOrder>('ASC');
   const [ordEndDate, setOrdEndDate] = useState<SortOrder>('ASC');
-  const [activeSortField, setActiveSortField] = useState<SortField | null>(null);
+  const [currentSortField, setCurrentSortField] = useState<SortField>('employee_name');
   const [departments, setDepartments] = useState<DepartmentDTO[]>([]);
   const limit = 24;
   const totalPages = Math.ceil(totalRecords / limit);
 
+  /**
+   * Đảo chiều sắp xếp giữa tăng dần và giảm dần.
+   *
+   * @param value thứ tự sắp xếp hiện tại
+   * @returns thứ tự sắp xếp sau khi đảo
+   */
   const toggleSortOrder = (value: SortOrder): SortOrder => (
     value === 'ASC' ? 'DESC' : 'ASC'
   );
 
+  /**
+   * Sắp xếp danh sách chuỗi theo thứ tự được truyền vào.
+   *
+   * @param values danh sách giá trị cần sắp xếp
+   * @param order thứ tự sắp xếp
+   * @returns danh sách đã sắp xếp
+   */
+  const sortTextValues = useCallback(
+    (values: Array<string | null>, order: SortOrder = 'ASC') => (
+      [...values].sort((left, right) => (
+        order === 'ASC'
+          ? String(left ?? '').localeCompare(String(right ?? ''))
+          : String(right ?? '').localeCompare(String(left ?? ''))
+      ))
+    ),
+    []
+  );
+
+  /**
+   * Sắp xếp danh sách ngày theo thứ tự được truyền vào.
+   *
+   * @param values danh sách ngày cần sắp xếp
+   * @param order thứ tự sắp xếp
+   * @returns danh sách ngày đã sắp xếp
+   */
+  const sortDateValues = useCallback(
+    (values: Array<string | null>, order: SortOrder = 'ASC') => (
+      [...values].sort((left, right) => {
+        const leftTime = left ? new Date(left).getTime() : Number.NEGATIVE_INFINITY;
+        const rightTime = right ? new Date(right).getTime() : Number.NEGATIVE_INFINITY;
+
+        return order === 'ASC' ? leftTime - rightTime : rightTime - leftTime;
+      })
+    ),
+    []
+  );
+
+  /**
+   * Lấy danh sách nhân viên theo điều kiện tìm kiếm và phân trang.
+   */
   const fetchEmployees = useCallback(async () => {
     setLoading(true);
 
     try {
-      // Luôn gửi phân trang, còn điều kiện search/sort chỉ gửi khi có giá trị.
       const params: EmployeeSearchParams = {
         offset: currentPage * limit,
         limit,
@@ -56,17 +102,8 @@ export function useEmployeeList() {
         params.department_id = Number(committedGroup);
       }
 
-      if (activeSortField === 'employee_name') {
-        params.ord_employee_name = ordEmployeeName;
-      } else if (activeSortField === 'certification_name') {
-        params.ord_certification_name = ordCertificationName;
-      } else if (activeSortField === 'end_date') {
-        params.ord_end_date = ordEndDate;
-      }
-
       const data = await getEmployees(params);
 
-      // Backend trả code khác 200 thì xem như không có dữ liệu để hiển thị.
       if (data.code === 200) {
         setEmployees(data.employees || []);
         setTotalRecords(data.totalRecords || 0);
@@ -87,38 +124,38 @@ export function useEmployeeList() {
     } finally {
       setLoading(false);
     }
-  }, [
-    currentPage,
-    activeSortField,
-    ordEmployeeName,
-    ordCertificationName,
-    ordEndDate,
-    committedName,
-    committedGroup,
-  ]);
+  }, [currentPage, committedName, committedGroup]);
 
+  /**
+   * Lấy danh sách phòng ban để hiển thị ở combobox.
+   */
+  const fetchDepartments = useCallback(async () => {
+    try {
+      const data = await getDepartments();
+      setDepartments(data);
+    } catch {
+      setDepartments([]);
+    }
+  }, []);
+
+  /**
+   * Tải lại danh sách nhân viên khi điều kiện tìm kiếm hoặc phân trang thay đổi.
+   */
   useEffect(() => {
     fetchEmployees();
   }, [fetchEmployees]);
 
+  /**
+   * Tải danh sách phòng ban một lần khi màn hình được mount.
+   */
   useEffect(() => {
-    const fetchDepartments = async () => {
-      try {
-        const data = await getDepartments();
-        setDepartments(data);
-      } catch {
-        setDepartments([]);
-      }
-    };
-
     fetchDepartments();
-  }, []);
+  }, [fetchDepartments]);
 
   /**
    * Thực hiện tìm kiếm với các giá trị đã nhập.
    */
   const handleSearch = () => {
-    // Chỉ commit giá trị khi người dùng bấm nút search.
     setCommittedName(searchName);
     setCommittedGroup(searchGroup);
     setCurrentPage(0);
@@ -127,28 +164,17 @@ export function useEmployeeList() {
   /**
    * Thay đổi thứ tự sắp xếp theo cột được chọn.
    *
-   * @param field Tên trường cần sắp xếp.
+   * @param field tên trường cần sắp xếp
    */
   const handleSort = (field: string) => {
-    // Bấm lại cùng một cột thì đổi ASC/DESC, bấm cột khác thì chuyển cột đang sort.
+    setCurrentSortField(field as SortField);
+
     if (field === 'employee_name') {
-      if (activeSortField === 'employee_name') {
-        setOrdEmployeeName((prev) => toggleSortOrder(prev));
-      } else {
-        setActiveSortField('employee_name');
-      }
+      setOrdEmployeeName((prev) => toggleSortOrder(prev));
     } else if (field === 'certification_name') {
-      if (activeSortField === 'certification_name') {
-        setOrdCertificationName((prev) => toggleSortOrder(prev));
-      } else {
-        setActiveSortField('certification_name');
-      }
+      setOrdCertificationName((prev) => toggleSortOrder(prev));
     } else if (field === 'end_date') {
-      if (activeSortField === 'end_date') {
-        setOrdEndDate((prev) => toggleSortOrder(prev));
-      } else {
-        setActiveSortField('end_date');
-      }
+      setOrdEndDate((prev) => toggleSortOrder(prev));
     }
 
     setCurrentPage(0);
@@ -157,8 +183,8 @@ export function useEmployeeList() {
   /**
    * Định dạng ngày theo dạng yyyy/MM/dd.
    *
-   * @param dateStr Chuỗi ngày đầu vào.
-   * @returns Chuỗi ngày đã định dạng hoặc chuỗi rỗng nếu không có dữ liệu.
+   * @param dateStr chuỗi ngày đầu vào
+   * @returns chuỗi ngày đã định dạng hoặc rỗng
    */
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) {
@@ -173,43 +199,25 @@ export function useEmployeeList() {
     return `${y}/${m}/${d}`;
   };
 
-  const stableSortIndicator = (field: string) => {
+  /**
+   * Trả về icon sắp xếp tương ứng với từng cột.
+   *
+   * @param field tên trường cần lấy icon
+   * @returns ký hiệu sắp xếp của cột
+   */
+  const getSortIndicator = (field: string) => {
     const defaultIndicator = '▲▽';
     const descendingIndicator = '▼△';
 
-    if (activeSortField === null) {
-      if (
-        field === 'employee_name' ||
-        field === 'certification_name' ||
-        field === 'end_date'
-      ) {
-        return defaultIndicator;
-      }
-
-      return '';
-    }
-
     if (field === 'employee_name') {
-      if (activeSortField !== 'employee_name') {
-        return defaultIndicator;
-      }
-
       return ordEmployeeName === 'ASC' ? defaultIndicator : descendingIndicator;
     }
 
     if (field === 'certification_name') {
-      if (activeSortField !== 'certification_name') {
-        return defaultIndicator;
-      }
-
       return ordCertificationName === 'ASC' ? defaultIndicator : descendingIndicator;
     }
 
     if (field === 'end_date') {
-      if (activeSortField !== 'end_date') {
-        return defaultIndicator;
-      }
-
       return ordEndDate === 'ASC' ? defaultIndicator : descendingIndicator;
     }
 
@@ -217,16 +225,66 @@ export function useEmployeeList() {
   };
 
   /**
+   * Tạo dữ liệu hiển thị riêng cho từng cột sort.
+   * Cột nào không được bấm sort sẽ giữ nguyên giá trị hiện tại.
+   */
+  const displayEmployees = useMemo(() => {
+    const compareField = (field: SortField, a: EmployeeDTO, b: EmployeeDTO): number => {
+      if (field === 'employee_name') {
+        const valueA = a.employeeName || '';
+        const valueB = b.employeeName || '';
+        return ordEmployeeName === 'ASC'
+          ? valueA.localeCompare(valueB)
+          : valueB.localeCompare(valueA);
+      }
+
+      if (field === 'certification_name') {
+        const valueA = a.certificationName || '';
+        const valueB = b.certificationName || '';
+        return ordCertificationName === 'ASC'
+          ? valueA.localeCompare(valueB)
+          : valueB.localeCompare(valueA);
+      }
+
+      const valueA = a.endDate ? new Date(a.endDate).getTime() : Number.NEGATIVE_INFINITY;
+      const valueB = b.endDate ? new Date(b.endDate).getTime() : Number.NEGATIVE_INFINITY;
+      return ordEndDate === 'ASC' ? valueA - valueB : valueB - valueA;
+    };
+
+    const sortOrder: SortField[] = [
+      currentSortField,
+      ...(['employee_name', 'certification_name', 'end_date'] as SortField[])
+        .filter((field) => field !== currentSortField),
+    ];
+
+    return [...employees].sort((a, b) => {
+      for (const field of sortOrder) {
+        const result = compareField(field, a, b);
+        if (result !== 0) {
+          return result;
+        }
+      }
+
+      return a.employeeId - b.employeeId;
+    });
+  }, [
+    employees,
+    currentSortField,
+    ordEmployeeName,
+    ordCertificationName,
+    ordEndDate,
+  ]);
+
+  /**
    * Tính toán mảng số trang hiển thị cho phân trang.
    *
-   * @returns Mảng chứa số trang hoặc dấu '...' cho ellipsis.
+   * @returns mảng chứa số trang hoặc dấu ...
    */
   const paginationPages = useMemo(() => {
     if (totalPages <= 1) {
       return [];
     }
 
-    // Rút gọn dãy phân trang khi số trang quá nhiều.
     const pages: (number | string)[] = [];
 
     if (totalPages <= 5) {
@@ -287,7 +345,7 @@ export function useEmployeeList() {
    * Trả về toàn bộ dữ liệu và hàm cần thiết cho component danh sách nhân viên.
    */
   return {
-    employees,
+    employees: displayEmployees,
     totalRecords,
     emptyMessage,
     loading,
@@ -302,7 +360,7 @@ export function useEmployeeList() {
     paginationPages,
     handleSearch,
     handleSort,
-    getSortIndicator: stableSortIndicator,
+    getSortIndicator,
     formatDate,
     handlePreviousPage,
     handleNextPage,
