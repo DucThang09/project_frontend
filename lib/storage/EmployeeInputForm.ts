@@ -6,9 +6,9 @@ import type {
 import type { DepartmentDTO } from '@/types/department';
 import type { CertificationDTO } from '@/types/certification';
 
-const EMPLOYEE_ADD_KEY = 'employee-add';
-const CONFIRM_DATA_KEY = 'employee-confirm-data';
-const RESTORE_KEY = 'employee-add-restore';
+const EMPLOYEE_DATA_KEY = 'employee-data';//Lưu dữ liệu form của màn add/edit employee
+const CONFIRM_DATA_KEY = 'employee-confirm-data';//Lưu dữ liệu đã format để hiển thị ở màn confirm
+const RESTORE_KEY = 'employee-restore';//khi quay lại từ màn confirm thì màn form cần restore dữ liệu trước đó, thay vì khởi tạo mới
 
 function isBrowser() {
   return typeof window !== 'undefined';
@@ -36,28 +36,9 @@ function parseDate(value: string | null): Date | null {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
-// Tạo trạng thái ban đầu cho màn add với toàn bộ field rỗng.
-export function createEmployeeEmpty(): EmployeeFormValues {
-  return {
-    employeeLoginId: '',
-    departmentId: '',
-    employeeName: '',
-    employeeNameKana: '',
-    employeeBirthDate: null,
-    employeeEmail: '',
-    employeeTelephone: '',
-    employeeLoginPassword: '',
-    employeeLoginPasswordConfirm: '',
-    certificationId: '',
-    certificationStartDate: null,
-    certificationEndDate: null,
-    score: '',
-  };
-}
-
-// Chuẩn hóa dữ liệu form để lưu tạm khi đi sang màn confirm.
+// Chuẩn hóa dữ liệu form để lưu khi đi sang màn confirm.
 export function toEmployeeAdd(
-  values: EmployeeFormValues, 
+  values: EmployeeFormValues,
   departments: DepartmentDTO[],
   certifications: CertificationDTO[],
 ): EmployeeAdd {
@@ -65,21 +46,21 @@ export function toEmployeeAdd(
   const cert = certifications.find((c) => String(c.certificationId) === values.certificationId);
 
   return {
-    employeeLoginId:              values.employeeLoginId.trim(),
-    departmentId:                 values.departmentId,
-    departmentName:               dept?.departmentName ?? '',
-    employeeName:                 values.employeeName.trim(),
-    employeeNameKana:             values.employeeNameKana.trim(),
-    employeeBirthDate:            formatDate(values.employeeBirthDate),
-    employeeEmail:                values.employeeEmail.trim(),
-    employeeTelephone:            values.employeeTelephone.trim(),
-    employeeLoginPassword:        values.employeeLoginPassword,
+    employeeLoginId: values.employeeLoginId.trim(),
+    departmentId: values.departmentId,
+    departmentName: dept?.departmentName ?? '',
+    employeeName: values.employeeName.trim(),
+    employeeNameKana: values.employeeNameKana.trim(),
+    employeeBirthDate: formatDate(values.employeeBirthDate),
+    employeeEmail: values.employeeEmail.trim(),
+    employeeTelephone: values.employeeTelephone.trim(),
+    employeeLoginPassword: values.employeeLoginPassword,
     employeeLoginPasswordConfirm: values.employeeLoginPasswordConfirm,
-    certificationId:              values.certificationId,
-    certificationName:            cert?.certificationName ?? '',
-    certificationStartDate:       formatDate(values.certificationStartDate),
-    certificationEndDate:         formatDate(values.certificationEndDate),
-    score:                        values.score.trim(),
+    certificationId: values.certificationId,
+    certificationName: cert?.certificationName ?? '',
+    certificationStartDate: formatDate(values.certificationStartDate),
+    certificationEndDate: formatDate(values.certificationEndDate),
+    score: values.score.trim(),
   };
 }
 
@@ -101,6 +82,22 @@ export function toEmployeeFormValues(data: EmployeeAdd): EmployeeFormValues {
     score: data.score,
   };
 }
+//dữ liệu hiển thị ở confirm
+export function toEmployeeConfirmData(data: EmployeeAdd): EmployeeConfirmData {
+  return {
+    employeeLoginId: data.employeeLoginId,
+    departmentName: data.departmentName,
+    employeeName: data.employeeName,
+    employeeNameKana: data.employeeNameKana,
+    employeeBirthDate: formatDisplayDate(data.employeeBirthDate),
+    employeeEmail: data.employeeEmail,
+    employeeTelephone: data.employeeTelephone,
+    certificationName: data.certificationName,
+    certificationStartDate: formatDisplayDate(data.certificationStartDate),
+    certificationEndDate: formatDisplayDate(data.certificationEndDate),
+    score: data.score,
+  };
+}
 
 // Đổi chuỗi ngày đã lưu sang dạng hiển thị yyyy/MM/dd ở màn confirm.
 export function formatDisplayDate(value: string | null): string {
@@ -117,19 +114,21 @@ export function formatDisplayDate(value: string | null): string {
 }
 
 // Lưu dữ liệu nhập của màn add vào sessionStorage.
-export function saveEmployeeAdd(data: EmployeeAdd): void {
+export function dataEmployeeAdd(data: EmployeeAdd): void {
   if (!isBrowser()) {
     return;
   }
-  window.sessionStorage.setItem(EMPLOYEE_ADD_KEY, JSON.stringify(data));
+  window.sessionStorage.setItem(EMPLOYEE_DATA_KEY, JSON.stringify(data));
 }
+
+export const saveEmployeeAdd = dataEmployeeAdd;
 
 // Đọc lại data màn add đã lưu trước đó.
 export function loadEmployeeAdd(): EmployeeAdd | null {
   if (!isBrowser()) {
     return null;
   }
-  const sessionValue = window.sessionStorage.getItem(EMPLOYEE_ADD_KEY);
+  const sessionValue = window.sessionStorage.getItem(EMPLOYEE_DATA_KEY);
   if (!sessionValue) {
     return null;
   }
@@ -142,13 +141,15 @@ export function loadEmployeeAdd(): EmployeeAdd | null {
 }
 
 // Lưu dữ liệu form vào storage trước khi chuyển sang trang xác nhận.
-export function saveEmployeeConfirmData(data: EmployeeConfirmData): void {
+export function employeeConfirmData(data: EmployeeConfirmData): void {
   if (!isBrowser()) {
     return;
   }
 
   window.sessionStorage.setItem(CONFIRM_DATA_KEY, JSON.stringify(data));
 }
+
+export const saveEmployeeConfirmData = employeeConfirmData;
 
 // Tải dữ liệu từ storage.
 export function loadEmployeeConfirmData(): EmployeeConfirmData | null {
@@ -167,20 +168,18 @@ export function loadEmployeeConfirmData(): EmployeeConfirmData | null {
   }
 }
 
-// form cần khôi phục dữ liệu khi quay lại.
+// Form cần khôi phục dữ liệu khi quay lại.
 export function setEmployeeAddRestore(): void {
   if (!isBrowser()) {
     return;
   }
-
   window.sessionStorage.setItem(RESTORE_KEY, 'true');
 }
 
-export function shouldRestoreEmployeeAdd(): boolean {
+export function RestoreEmployeeAdd(): boolean {
   if (!isBrowser()) {
     return false;
   }
-
   return window.sessionStorage.getItem(RESTORE_KEY) === 'true';
 }
 
@@ -197,8 +196,7 @@ export function clearEmployeeAdd(): void {
   if (!isBrowser()) {
     return;
   }
-
-  window.sessionStorage.removeItem(EMPLOYEE_ADD_KEY);
+  window.sessionStorage.removeItem(EMPLOYEE_DATA_KEY);
   window.sessionStorage.removeItem(CONFIRM_DATA_KEY);
   window.sessionStorage.removeItem(RESTORE_KEY);
 }

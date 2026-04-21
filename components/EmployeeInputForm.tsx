@@ -13,6 +13,7 @@ export default function EmployeeInputForm() {
     errorMessage,
     register,
     control,
+    setValue,
     watch,
     onConfirm,
     onBack,
@@ -25,10 +26,23 @@ export default function EmployeeInputForm() {
   const selectedDepartmentId = watch('departmentId');
   const selectedCertificationId = watch('certificationId');
   const isCertificationSelected = selectedCertificationId !== '';
+  const certificationField = register('certificationId');
 
   // Các ô ngày chỉ được chọn từ calendar, không cho nhập tay.
   const preventManualDateInput = (event: React.KeyboardEvent<HTMLElement>) => {
     event.preventDefault();
+  };
+
+  const handleCertificationChange = (
+    event: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    certificationField.onChange(event);
+
+    if (event.target.value === '') {
+      setValue('certificationStartDate', null);
+      setValue('certificationEndDate', null);
+      setValue('score', '');
+    }
   };
 
   return (
@@ -125,7 +139,14 @@ export default function EmployeeInputForm() {
             <label className="col-form-label col-sm-2"><i className="relative">資格:</i></label>
             <div className="col-sm col-sm-10">
               {/* Bind dữ liệu certificates vào combobox chứng chỉ, có phần tử rỗng ở đầu. */}
-              <select className="form-control" value={selectedCertificationId} {...register('certificationId')}>
+              <select
+                className="form-control"
+                value={selectedCertificationId}
+                name={certificationField.name}
+                ref={certificationField.ref}
+                onBlur={certificationField.onBlur}
+                onChange={handleCertificationChange}
+              >
                 <option value="">選択してください</option>
                 {certifications.map((certification) => (
                   <option key={certification.certificationId} value={certification.certificationId}>

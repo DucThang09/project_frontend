@@ -36,23 +36,27 @@ jest.mock('react-datepicker', () => {
 describe('EmployeeInputForm', () => {
   const mockOnConfirm = jest.fn();
   const mockOnBack = jest.fn();
+  const mockSetValue = jest.fn();
   const fieldValues: Record<string, string> = {
     departmentId: '',
     certificationId: '',
   };
+  const mockCertificationOnChange = jest.fn((event: { target: { value: string } }) => {
+    fieldValues.certificationId = event.target.value;
+  });
   const mockRegister = jest.fn((name: string) => ({
     name,
-    onChange: jest.fn(),
+    onChange: name === 'certificationId' ? mockCertificationOnChange : jest.fn(),
     onBlur: jest.fn(),
     ref: jest.fn(),
   }));
   const mockControl = {};
-  const mockWatch = jest.fn().mockReturnValue('');
 
   beforeEach(() => {
     jest.clearAllMocks();
     fieldValues.departmentId = '';
     fieldValues.certificationId = '';
+    mockSetValue.mockReset();
 
     (useADM004 as jest.Mock).mockReturnValue({
       departments: [
@@ -64,6 +68,7 @@ describe('EmployeeInputForm', () => {
       errorMessage: '',
       register: mockRegister,
       control: mockControl,
+      setValue: mockSetValue,
       watch: jest.fn((name: string) => fieldValues[name] ?? ''),
       onConfirm: mockOnConfirm,
       onBack: mockOnBack,
@@ -105,5 +110,31 @@ describe('EmployeeInputForm', () => {
 
     expect(departmentSelect).toHaveValue('1');
     expect(certificationSelect).toHaveValue('1');
+  });
+
+  it('clears dependent certification fields when user clears certification', () => {
+    fieldValues.certificationId = '1';
+
+    render(<EmployeeInputForm />);
+
+    const [, certificationSelect] = screen.getAllByRole('combobox');
+
+    fireEvent.change(certificationSelect, { target: { value: '' } });
+
+    expect(mockCertificationOnChange).toHaveBeenCalledTimes(1);
+    expect(mockSetValue).toHaveBeenNthCalledWith(1, 'certificationStartDate', null);
+    expect(mockSetValue).toHaveBeenNthCalledWith(2, 'certificationEndDate', null);
+    expect(mockSetValue).toHaveBeenNthCalledWith(3, 'score', '');
+  });
+
+  it('does not clear dependent certification fields when user selects a certification', () => {
+    render(<EmployeeInputForm />);
+
+    const [, certificationSelect] = screen.getAllByRole('combobox');
+
+    fireEvent.change(certificationSelect, { target: { value: '1' } });
+
+    expect(mockCertificationOnChange).toHaveBeenCalledTimes(1);
+    expect(mockSetValue).not.toHaveBeenCalled();
   });
 });

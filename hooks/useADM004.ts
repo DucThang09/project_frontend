@@ -1,23 +1,42 @@
 ﻿'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { getDepartments } from '@/lib/api/department.api';
 import { getCertifications } from '@/lib/api/certification.api';
+import { EMPLOYEE_MODE_ADD, EMPLOYEE_MODE_EDIT } from '@/lib/constants/employee';
 import {
-  createEmployeeEmpty,
-  formatDisplayDate,
+  clearEmployeeAddRestore,
   loadEmployeeAdd,
+  RestoreEmployeeAdd,
   saveEmployeeAdd,
   saveEmployeeConfirmData,
-  shouldRestoreEmployeeAdd,
   toEmployeeAdd,
+  toEmployeeConfirmData,
   toEmployeeFormValues,
 } from '@/lib/storage/EmployeeInputForm';
 import type { DepartmentDTO } from '@/types/department';
 import type { CertificationDTO } from '@/types/certification';
 import type { EmployeeFormValues } from '@/types/employee';
+
+export function createEmployeeEmpty(): EmployeeFormValues {
+  return {
+    employeeLoginId: '',
+    departmentId: '',
+    employeeName: '',
+    employeeNameKana: '',
+    employeeBirthDate: null,
+    employeeEmail: '',
+    employeeTelephone: '',
+    employeeLoginPassword: '',
+    employeeLoginPasswordConfirm: '',
+    certificationId: '',
+    certificationStartDate: null,
+    certificationEndDate: null,
+    score: '',
+  };
+}
 
 export function useADM004() {
   const router = useRouter();
@@ -25,27 +44,30 @@ export function useADM004() {
   const [departments, setDepartments] = useState<DepartmentDTO[]>([]);
   const [certifications, setCertifications] = useState<CertificationDTO[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
-  const isRestoringRef = useRef(false);
 
   // Khởi tạo form của màn add/edit.
   const form = useForm<EmployeeFormValues>({
     defaultValues: createEmployeeEmpty(),
   });
-  const { reset, handleSubmit, watch, setValue } = form;
+  const { reset, handleSubmit } = form;
 
-  // Đọc id từ query string để phân giữa add mode và edit mode.
+  // Đọc id từ query để phân giữa add mode và edit mode.
   const employeeId = searchParams.get('id');
+  const mode = employeeId ? EMPLOYEE_MODE_EDIT : EMPLOYEE_MODE_ADD; //Nếu có id thì là màn edit, không có thì là add
 
   useEffect(() => {
-    const saveData = loadEmployeeAdd();
-    const isBackFromConfirm = shouldRestoreEmployeeAdd();
+    //Lấy dữ liệu đã lưu trước đó.
+    const employeeInfo = loadEmployeeAdd();
+    //Kiểm tra có phải vừa từ màn confirm quay lại không.
+    const isBackFromConfirm = RestoreEmployeeAdd();
 
-    if (isBackFromConfirm || saveData) {
-      isRestoringRef.current = true;
-      reset(saveData ? toEmployeeFormValues(saveData) : createEmployeeEmpty());
-    } else if (employeeId) {
+    if (isBackFromConfirm && employeeInfo) {
+      //lấy toàn bộ dữ liệu đã lưu trong session vào lại form
+      reset(toEmployeeFormValues(employeeInfo));
+      clearEmployeeAddRestore();
+    } else if (mode === EMPLOYEE_MODE_EDIT ) {
 
-    } else {
+    } else if (!employeeInfo) {
       reset(createEmployeeEmpty());
     }
 
@@ -79,53 +101,20 @@ export function useADM004() {
     };
     fetchMasterData();
 
-    // Xóa field phụ thuộc khi người dùng bỏ chọn chứng chỉ
-    const subscription = watch((value, { name }) => {
-      if (isRestoringRef.current) {
-        isRestoringRef.current = false;
-        return;
-      }
-
-      if (name === 'certificationId' && !value.certificationId) {
-        setValue('certificationStartDate', null);
-        setValue('certificationEndDate', null);
-        setValue('score', '');
-      }
-    });
-
     return () => {
       active = false;
-      subscription.unsubscribe();
     };
   }, []);
 
-  // session cho dữ liệu form/confirm.
+  
   const onConfirm = handleSubmit((values) => {
-    const saveForm = toEmployeeAdd(values, departments, certifications);
-    saveEmployeeAdd(saveForm);
-    const selectedDepartment = departments.find(
-      (department) => String(department.departmentId) === saveForm.departmentId
-    );
-    const selectedCertification = certifications.find(
-      (certification) => String(certification.certificationId) === saveForm.certificationId
-    );
-    saveEmployeeConfirmData({
-      employeeLoginId: saveForm.employeeLoginId,
-      departmentName: selectedDepartment?.departmentName ?? '',
-      employeeName: saveForm.employeeName,
-      employeeNameKana: saveForm.employeeNameKana,
-      employeeBirthDate: formatDisplayDate(saveForm.employeeBirthDate),
-      employeeEmail: saveForm.employeeEmail,
-      employeeTelephone: saveForm.employeeTelephone,
-      certificationName: selectedCertification?.certificationName ?? '',
-      certificationStartDate: formatDisplayDate(saveForm.certificationStartDate),
-      certificationEndDate: formatDisplayDate(saveForm.certificationEndDate),
-      score: saveForm.score,
-    });
+    const employeeInfo = toEmployeeAdd(values, departments, certifications);// lấy dữ liệu đã chuẩn hóa 
+    saveEmployeeAdd(employeeInfo);//lưu vào session 
+    saveEmployeeConfirmData(toEmployeeConfirmData(employeeInfo));
     router.push('/employees/adm005');
   });
 
-  // Quay về màn danh sách; ADM002 sẽ tự restore lại search, sort và page trước đó.
+  // Quay về màn danh sách
   const onBack = () => {
     router.push('/employees/adm002');
   };
@@ -135,6 +124,8 @@ export function useADM004() {
     departments,
     certifications,
     errorMessage,
+    mode,
+    employeeId,
     onConfirm,
     onBack,
   };

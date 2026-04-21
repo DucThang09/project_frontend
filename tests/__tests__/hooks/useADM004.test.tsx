@@ -1,13 +1,13 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { useADM004 } from '@/hooks/useADM004';
+import { createEmployeeEmpty, useADM004 } from '@/hooks/useADM004';
 import { getDepartments } from '@/lib/api/department.api';
 import { getCertifications } from '@/lib/api/certification.api';
 import {
-  createEmployeeEmpty,
+  clearEmployeeAddRestore,
   loadEmployeeAdd,
+  RestoreEmployeeAdd,
   saveEmployeeAdd,
   saveEmployeeConfirmData,
-  shouldRestoreEmployeeAdd,
   toEmployeeFormValues,
 } from '@/lib/storage/EmployeeInputForm';
 
@@ -17,8 +17,9 @@ jest.mock('@/lib/storage/EmployeeInputForm', () => {
   const actual = jest.requireActual('@/lib/storage/EmployeeInputForm');
   return {
     ...actual,
+    clearEmployeeAddRestore: jest.fn(),
     loadEmployeeAdd: jest.fn(),
-    shouldRestoreEmployeeAdd: jest.fn(),
+    RestoreEmployeeAdd: jest.fn(),
     saveEmployeeAdd: jest.fn(),
     saveEmployeeConfirmData: jest.fn(),
   };
@@ -50,7 +51,7 @@ describe('useADM004', () => {
 
     (getDepartments as jest.Mock).mockResolvedValue([]);
     (getCertifications as jest.Mock).mockResolvedValue([]);
-    (shouldRestoreEmployeeAdd as jest.Mock).mockReturnValue(false);
+    (RestoreEmployeeAdd as jest.Mock).mockReturnValue(false);
     (loadEmployeeAdd as jest.Mock).mockReturnValue(null);
   });
 
@@ -71,7 +72,7 @@ describe('useADM004', () => {
       score: '850',
     };
 
-    (shouldRestoreEmployeeAdd as jest.Mock).mockReturnValue(true);
+    (RestoreEmployeeAdd as jest.Mock).mockReturnValue(true);
     (loadEmployeeAdd as jest.Mock).mockReturnValue(savedData);
 
     const { result } = renderHook(() => useADM004());
@@ -79,6 +80,8 @@ describe('useADM004', () => {
     await waitFor(() => {
       expect(result.current.getValues()).toEqual(toEmployeeFormValues(savedData));
     });
+
+    expect(clearEmployeeAddRestore).toHaveBeenCalledTimes(1);
   });
 
   it('initializes empty form when there is no restore flag', async () => {
@@ -90,6 +93,35 @@ describe('useADM004', () => {
 
     expect(saveEmployeeAdd).not.toHaveBeenCalled();
     expect(saveEmployeeConfirmData).not.toHaveBeenCalled();
+  });
+
+  it('does not restore saved data without restore flag', async () => {
+    const savedData = {
+      employeeLoginId: 'user01',
+      departmentId: '2',
+      employeeName: 'Test User',
+      employeeNameKana: 'TEST USER',
+      employeeBirthDate: '2000-01-01',
+      employeeEmail: 'test@example.com',
+      employeeTelephone: '0123456789',
+      employeeLoginPassword: 'secret',
+      employeeLoginPasswordConfirm: 'secret',
+      certificationId: '1',
+      certificationStartDate: '2020-01-01',
+      certificationEndDate: '2022-01-01',
+      score: '850',
+    };
+
+    (RestoreEmployeeAdd as jest.Mock).mockReturnValue(false);
+    (loadEmployeeAdd as jest.Mock).mockReturnValue(savedData);
+
+    const { result } = renderHook(() => useADM004());
+
+    await waitFor(() => {
+      expect(result.current.getValues()).toEqual(createEmployeeEmpty());
+    });
+
+    expect(clearEmployeeAddRestore).not.toHaveBeenCalled();
   });
 
   it('does not initialize add defaults when opened in edit mode without restore flag', async () => {
