@@ -2,7 +2,7 @@
 export type SortOrder = 'ASC' | 'DESC';
 
 // Dữ liệu một bản ghi nhân viên trả về từ API.
-export interface EmployeeDTO {
+export interface Employee {
   readonly employeeId: number;
   readonly employeeName: string;
   readonly employeeBirthDate: string | null;
@@ -24,7 +24,7 @@ export interface ApiMessage {
 export interface EmployeeListApiResponse {
   readonly code: number;
   readonly totalRecords: number;
-  readonly employees: EmployeeDTO[];
+  readonly employees: Employee[];
   readonly message?: ApiMessage;
 }
 
@@ -57,9 +57,10 @@ export interface EmployeeFormValues {
 }
 
 // Dữ liệu tạm lưu của màn add trước khi sang confirm.
-export interface EmployeeAddDraft {
+export interface EmployeeAdd {
   employeeLoginId: string;
   departmentId: string;
+  departmentName: string;
   employeeName: string;
   employeeNameKana: string;
   employeeBirthDate: string | null;
@@ -68,6 +69,7 @@ export interface EmployeeAddDraft {
   employeeLoginPassword: string;
   employeeLoginPasswordConfirm: string;
   certificationId: string;
+  certificationName: string;
   certificationStartDate: string | null;
   certificationEndDate: string | null;
   score: string;

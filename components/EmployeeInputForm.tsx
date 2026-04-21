@@ -22,6 +22,7 @@ export default function EmployeeInputForm() {
   const birthDateRef = useRef<DatePicker>(null);
   const certificationStartDateRef = useRef<DatePicker>(null);
   const certificationEndDateRef = useRef<DatePicker>(null);
+  const selectedDepartmentId = watch('departmentId');
   const selectedCertificationId = watch('certificationId');
   const isCertificationSelected = selectedCertificationId !== '';
 
@@ -32,10 +33,9 @@ export default function EmployeeInputForm() {
 
   return (
     <div className="row">
-      <form className="c-form box-shadow" onSubmit={onConfirm}>
+      <form className="c-form box-shadow">
         <ul>
           <li className="title">会員情報追加</li>
-          {/* Theo mục 5.1 trong ảnh, lỗi load master data được hiển thị ngay dưới tiêu đề màn hình. */}
           {errorMessage ? (
             <li className="box-err">
               <div className="box-err-content">{errorMessage}</div>
@@ -51,7 +51,7 @@ export default function EmployeeInputForm() {
             <label className="col-form-label col-sm-2"><i className="relative">グループ:<span className="note-red">*</span></i></label>
             <div className="col-sm col-sm-10">
               {/* Bind dữ liệu departments vào combobox nhóm, có phần tử rỗng ở đầu. */}
-              <select className="form-control" {...register('departmentId')}>
+              <select className="form-control" value={selectedDepartmentId} {...register('departmentId')}>
                 <option value="">選択してください</option>
                 {departments.map((department) => (
                   <option key={department.departmentId} value={department.departmentId}>
@@ -125,7 +125,7 @@ export default function EmployeeInputForm() {
             <label className="col-form-label col-sm-2"><i className="relative">資格:</i></label>
             <div className="col-sm col-sm-10">
               {/* Bind dữ liệu certificates vào combobox chứng chỉ, có phần tử rỗng ở đầu. */}
-              <select className="form-control" {...register('certificationId')}>
+              <select className="form-control" value={selectedCertificationId} {...register('certificationId')}>
                 <option value="">選択してください</option>
                 {certifications.map((certification) => (
                   <option key={certification.certificationId} value={certification.certificationId}>
@@ -192,7 +192,7 @@ export default function EmployeeInputForm() {
           </li>
           <li className="form-group row d-flex">
             <div className="btn-group col-sm col-sm-10 ml">
-              <button type="submit" className="btn btn-primary btn-sm">確認</button>
+              <button type="button" onClick={onConfirm} className="btn btn-primary btn-sm">確認</button>
               <button type="button" onClick={onBack} className="btn btn-secondary btn-sm">戻る</button>
             </div>
           </li>

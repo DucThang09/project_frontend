@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { getEmployees } from '@/lib/api/employee.api';
 import { EMPLOYEE_LIST_PAGE_SIZE } from '@/lib/constants/employee';
 import { getDepartments } from '@/lib/api/department.api';
-import { clearEmployeeAddFlow } from '@/lib/storage/employee-add';
+import { clearEmployeeAdd} from '@/lib/storage/EmployeeInputForm';
 import {
   loadEmployeeListState,
   saveEmployeeListState,
@@ -14,7 +14,7 @@ import {
 } from '@/lib/storage/employee-list';
 import type { DepartmentDTO } from '@/types/department';
 import type {
-  EmployeeDTO,
+  Employee,
   EmployeeSearchParams,
   SortOrder,
 } from '@/types/employee';
@@ -30,7 +30,7 @@ export function useEmployeeList() {
     departmentId: string;
   };
 
-  const [employees, setEmployees] = useState<EmployeeDTO[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
   const [emptyMessage, setEmptyMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -315,7 +315,7 @@ export function useEmployeeList() {
       ordEndDate,
       currentSortField,
     });
-    clearEmployeeAddFlow();
+    clearEmployeeAdd();
     router.push('/employees/adm004');
   };
 

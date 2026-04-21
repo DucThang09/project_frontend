@@ -1,32 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import {
-  loadEmployeeConfirmData,
-  setEmployeeAddRestoreFlag,
-} from '@/lib/storage/employee-add';
-import type { EmployeeConfirmData } from '@/types/employee';
+import { useADM005 } from '@/hooks/useADM005';
 
 export default function EmployeeConfirm() {
-  const router = useRouter();
-  const [data, setData] = useState<EmployeeConfirmData | null>(null);
-
-  useEffect(() => {
-    const confirmData = loadEmployeeConfirmData();
-
-    if (!confirmData) {
-      router.replace('/employees/adm004');
-      return;
-    }
-
-    setData(confirmData);
-  }, [router]);
-
-  const handleBack = () => {
-    setEmployeeAddRestoreFlag();
-    router.push('/employees/adm004');
-  };
+  const { data, handleBack, handleOk } = useADM005();
 
   if (!data) {
     return null;
@@ -87,7 +64,7 @@ export default function EmployeeConfirm() {
           </li>
           <li className="form-group row d-flex">
             <div className="btn-group col-sm col-sm-10 ml">
-              <button type="button" className="btn btn-primary btn-sm" disabled>OK</button>
+              <button type="button" onClick={handleOk} className="btn btn-primary btn-sm">OK</button>
               <button type="button" onClick={handleBack} className="btn btn-secondary btn-sm">戻る</button>
             </div>
           </li>

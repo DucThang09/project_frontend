@@ -7,7 +7,7 @@ import {
   loadEmployeeListState,
   saveEmployeeListState,
 } from '@/lib/storage/employee-list';
-import { clearEmployeeAddFlow } from '@/lib/storage/employee-add';
+import { clearEmployeeAddFlow } from '@/lib/storage/EmployeeInputForm';
 
 jest.mock('@/lib/api/employee.api');
 jest.mock('@/lib/api/department.api');
