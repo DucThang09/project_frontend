@@ -28,6 +28,12 @@ export interface EmployeeListApiResponse {
   readonly message?: ApiMessage;
 }
 
+// Cấu trúc response của API validate employee input.
+export interface EmployeeValidationApiResponse {
+  readonly code: number;
+  readonly message?: ApiMessage;
+}
+
 // Điều kiện tìm kiếm danh sách nhân viên.
 export interface EmployeeSearchParams {
   employee_name?: string;
@@ -53,6 +59,23 @@ export interface EmployeeFormValues {
   certificationId: string;
   certificationStartDate: Date | null;
   certificationEndDate: Date | null;
+  score: string;
+}
+
+// Payload gửi backend để validate employee input.
+export interface EmployeeValidationRequest {
+  employeeLoginId: string;
+  departmentId: string;
+  employeeName: string;
+  employeeNameKana: string;
+  employeeBirthDate: string | null;
+  employeeEmail: string;
+  employeeTelephone: string;
+  employeeLoginPassword: string;
+  employeeLoginPasswordConfirm: string;
+  certificationId: string;
+  certificationStartDate: string | null;
+  certificationEndDate: string | null;
   score: string;
 }
 

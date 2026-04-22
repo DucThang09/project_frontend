@@ -850,3 +850,15 @@ cursor: pointer;
   height: 25px; /* Adjust as needed */
   background: url(/assets/images/ic_calendar.svg) no-repeat 0 0;
 }
+
+.field-error-message {
+  color: #e10020;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.content input.field-error-input,
+.content select.field-error-input,
+.datepicker-wrapper input.field-error-input {
+  border: 1px solid #c00 !important;
+}

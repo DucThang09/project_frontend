@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useRef } from 'react';
 import { Controller } from 'react-hook-form';
@@ -14,7 +14,9 @@ export default function EmployeeInputForm() {
     register,
     control,
     setValue,
+    clearErrors,
     watch,
+    formState: { errors },
     onConfirm,
     onBack,
   } = useADM004();
@@ -33,6 +35,12 @@ export default function EmployeeInputForm() {
     event.preventDefault();
   };
 
+  const getFieldClassName = (hasError: boolean) => (
+    hasError ? 'form-control field-error-input' : 'form-control'
+  );
+
+  const getFieldErrorClassName = () => 'field-error-message';
+
   const handleCertificationChange = (
     event: React.ChangeEvent<HTMLSelectElement>
   ) => {
@@ -42,6 +50,12 @@ export default function EmployeeInputForm() {
       setValue('certificationStartDate', null);
       setValue('certificationEndDate', null);
       setValue('score', '');
+      clearErrors([
+        'certificationId',
+        'certificationStartDate',
+        'certificationEndDate',
+        'score',
+      ]);
     }
   };
 
@@ -58,14 +72,25 @@ export default function EmployeeInputForm() {
           <li className="form-group row d-flex">
             <label className="col-form-label col-sm-2"><i className="relative">アカウント名:<span className="note-red">*</span></i></label>
             <div className="col-sm col-sm-10">
-              <input type="text" className="form-control" {...register('employeeLoginId')} />
+              <input
+                type="text"
+                className={getFieldClassName(Boolean(errors.employeeLoginId))}
+                {...register('employeeLoginId')}
+              />
+              {errors.employeeLoginId ? (
+                <div className={getFieldErrorClassName()}>{errors.employeeLoginId.message}</div>
+              ) : null}
             </div>
           </li>
           <li className="form-group row d-flex">
             <label className="col-form-label col-sm-2"><i className="relative">グループ:<span className="note-red">*</span></i></label>
             <div className="col-sm col-sm-10">
               {/* Bind dữ liệu departments vào combobox nhóm, có phần tử rỗng ở đầu. */}
-              <select className="form-control" value={selectedDepartmentId} {...register('departmentId')}>
+              <select
+                className={getFieldClassName(Boolean(errors.departmentId))}
+                value={selectedDepartmentId}
+                {...register('departmentId')}
+              >
                 <option value="">選択してください</option>
                 {departments.map((department) => (
                   <option key={department.departmentId} value={department.departmentId}>
@@ -73,65 +98,120 @@ export default function EmployeeInputForm() {
                   </option>
                 ))}
               </select>
+              {errors.departmentId ? (
+                <div className={getFieldErrorClassName()}>{errors.departmentId.message}</div>
+              ) : null}
             </div>
           </li>
           <li className="form-group row d-flex">
             <label className="col-form-label col-sm-2"><i className="relative">氏名:<span className="note-red">*</span></i></label>
             <div className="col-sm col-sm-10">
-              <input type="text" className="form-control" {...register('employeeName')} />
+              <input
+                type="text"
+                className={getFieldClassName(Boolean(errors.employeeName))}
+                {...register('employeeName')}
+              />
+              {errors.employeeName ? (
+                <div className={getFieldErrorClassName()}>{errors.employeeName.message}</div>
+              ) : null}
             </div>
           </li>
           <li className="form-group row d-flex">
             <label className="col-form-label col-sm-2"><i className="relative">カタカナ氏名:<span className="note-red">*</span></i></label>
             <div className="col-sm col-sm-10">
-              <input type="text" className="form-control" {...register('employeeNameKana')} />
+              <input
+                type="text"
+                className={getFieldClassName(Boolean(errors.employeeNameKana))}
+                {...register('employeeNameKana')}
+              />
+              {errors.employeeNameKana ? (
+                <div className={getFieldErrorClassName()}>{errors.employeeNameKana.message}</div>
+              ) : null}
             </div>
           </li>
           <li className="form-group row d-flex">
             <label className="col-form-label col-sm-2"><i className="relative">生年月日:<span className="note-red">*</span></i></label>
-            <div className="col-sm col-sm-10 d-flex">
-              <div className="datepicker-wrapper">
-                {/* Dùng Controller để đồng bộ DatePicker với react-hook-form cho các ô ngày. */}
-                <Controller
-                  name="employeeBirthDate"
-                  control={control}
-                  render={({ field }) => (
-                    <DatePicker
-                      ref={birthDateRef}
-                      placeholderText="yyyy/MM/dd"
-                      selected={field.value}
-                      onChange={(date) => field.onChange(date)}
-                      onKeyDown={preventManualDateInput}
-                      dateFormat="yyyy/MM/dd"
-                    />
-                  )}
-                />
-                <span className="glyphicon glyphicon-calendar" onClick={() => birthDateRef.current?.setFocus()}></span>
+            <div className="col-sm col-sm-10">
+              <div className="d-flex">
+                <div className="datepicker-wrapper">
+                  {/* Dùng Controller để đồng bộ DatePicker với react-hook-form cho các ô ngày. */}
+                  <Controller
+                    name="employeeBirthDate"
+                    control={control}
+                    render={({ field }) => (
+                      <DatePicker
+                        ref={birthDateRef}
+                        placeholderText="yyyy/MM/dd"
+                        selected={field.value}
+                        onChange={(date) => field.onChange(date)}
+                        onBlur={field.onBlur}
+                        onKeyDown={preventManualDateInput}
+                        dateFormat="yyyy/MM/dd"
+                      />
+                    )}
+                  />
+                  <span className="glyphicon glyphicon-calendar" onClick={() => birthDateRef.current?.setFocus()}></span>
+                </div>
               </div>
+              {errors.employeeBirthDate ? (
+                <div className={getFieldErrorClassName()}>{errors.employeeBirthDate.message}</div>
+              ) : null}
             </div>
           </li>
           <li className="form-group row d-flex">
             <label className="col-form-label col-sm-2"><i className="relative">メールアドレス:<span className="note-red">*</span></i></label>
             <div className="col-sm col-sm-10">
-              <input type="text" className="form-control" {...register('employeeEmail')} />
+              <input
+                type="text"
+                className={getFieldClassName(Boolean(errors.employeeEmail))}
+                {...register('employeeEmail')}
+              />
+              {errors.employeeEmail ? (
+                <div className={getFieldErrorClassName()}>{errors.employeeEmail.message}</div>
+              ) : null}
             </div>
           </li>
           <li className="form-group row d-flex">
             <label className="col-form-label col-sm-2"><i className="relative">電話番号:<span className="note-red">*</span></i></label>
             <div className="col-sm col-sm-10">
-              <input type="text" className="form-control" {...register('employeeTelephone')} />
+              <input
+                type="text"
+                className={getFieldClassName(Boolean(errors.employeeTelephone))}
+                {...register('employeeTelephone')}
+              />
+              {errors.employeeTelephone ? (
+                <div className={getFieldErrorClassName()}>{errors.employeeTelephone.message}</div>
+              ) : null}
             </div>
           </li>
           <li className="form-group row d-flex">
             <label className="col-form-label col-sm-2"><i className="relative">パスワード:<span className="note-red">*</span></i></label>
             <div className="col-sm col-sm-10">
-              <input type="password" className="form-control" {...register('employeeLoginPassword')} />
+              <input
+                type="password"
+                className={getFieldClassName(Boolean(errors.employeeLoginPassword))}
+                {...register('employeeLoginPassword')}
+              />
+              {errors.employeeLoginPassword ? (
+                <div className={getFieldErrorClassName()}>
+                  {errors.employeeLoginPassword.message}
+                </div>
+              ) : null}
             </div>
           </li>
           <li className="form-group row d-flex">
             <label className="col-form-label col-sm-2"><i className="relative">パスワード（確認）:</i></label>
             <div className="col-sm col-sm-10">
-              <input type="password" className="form-control" {...register('employeeLoginPasswordConfirm')} />
+              <input
+                type="password"
+                className={getFieldClassName(Boolean(errors.employeeLoginPasswordConfirm))}
+                {...register('employeeLoginPasswordConfirm')}
+              />
+              {errors.employeeLoginPasswordConfirm ? (
+                <div className={getFieldErrorClassName()}>
+                  {errors.employeeLoginPasswordConfirm.message}
+                </div>
+              ) : null}
             </div>
           </li>
           <li className="title mt-12"><a href="#!">日本語能力</a></li>
@@ -140,7 +220,7 @@ export default function EmployeeInputForm() {
             <div className="col-sm col-sm-10">
               {/* Bind dữ liệu certificates vào combobox chứng chỉ, có phần tử rỗng ở đầu. */}
               <select
-                className="form-control"
+                className={getFieldClassName(Boolean(errors.certificationId))}
                 value={selectedCertificationId}
                 name={certificationField.name}
                 ref={certificationField.ref}
@@ -154,61 +234,86 @@ export default function EmployeeInputForm() {
                   </option>
                 ))}
               </select>
+              {errors.certificationId ? (
+                <div className={getFieldErrorClassName()}>{errors.certificationId.message}</div>
+              ) : null}
             </div>
           </li>
           <li className="form-group row d-flex">
             <label className="col-form-label col-sm-2"><i className="relative">資格交付日:<span className="note-red">*</span></i></label>
-            <div className="col-sm col-sm-10 d-flex">
-              <div className="datepicker-wrapper">
-                {/* Các field ngày này phụ thuộc vào việc đã chọn 資格 hay chưa. */}
-                <Controller
-                  name="certificationStartDate"
-                  control={control}
-                  render={({ field }) => (
-                    <DatePicker
-                      ref={certificationStartDateRef}
-                      placeholderText="yyyy/MM/dd"
-                      selected={field.value}
-                      onChange={(date) => field.onChange(date)}
-                      onKeyDown={preventManualDateInput}
-                      disabled={!isCertificationSelected}
-                      dateFormat="yyyy/MM/dd"
-                    />
-                  )}
-                />
-                <span className="glyphicon glyphicon-calendar" onClick={() => certificationStartDateRef.current?.setFocus()}></span>
+            <div className="col-sm col-sm-10">
+              <div className="d-flex">
+                <div className="datepicker-wrapper">
+                  {/* Các field ngày này phụ thuộc vào việc đã chọn 資格 hay chưa. */}
+                  <Controller
+                    name="certificationStartDate"
+                    control={control}
+                    render={({ field }) => (
+                      <DatePicker
+                        ref={certificationStartDateRef}
+                        className={Boolean(errors.certificationStartDate) ? 'field-error-input' : undefined}
+                        placeholderText="yyyy/MM/dd"
+                        selected={field.value}
+                        onChange={(date) => field.onChange(date)}
+                        onBlur={field.onBlur}
+                        onKeyDown={preventManualDateInput}
+                        disabled={!isCertificationSelected}
+                        dateFormat="yyyy/MM/dd"
+                      />
+                    )}
+                  />
+                  <span className="glyphicon glyphicon-calendar" onClick={() => certificationStartDateRef.current?.setFocus()}></span>
+                </div>
               </div>
+              {errors.certificationStartDate ? (
+                <div className={getFieldErrorClassName()}>{errors.certificationStartDate.message}</div>
+              ) : null}
             </div>
           </li>
           <li className="form-group row d-flex">
             <label className="col-form-label col-sm-2"><i className="relative">失効日:<span className="note-red">*</span></i></label>
-            <div className="col-sm col-sm-10 d-flex">
-              <div className="datepicker-wrapper">
-                {/* Các field ngày này phụ thuộc vào việc đã chọn 資格 hay chưa. */}
-                <Controller
-                  name="certificationEndDate"
-                  control={control}
-                  render={({ field }) => (
-                    <DatePicker
-                      ref={certificationEndDateRef}
-                      placeholderText="yyyy/MM/dd"
-                      selected={field.value}
-                      onChange={(date) => field.onChange(date)}
-                      onKeyDown={preventManualDateInput}
-                      disabled={!isCertificationSelected}
-                      dateFormat="yyyy/MM/dd"
-                    />
-                  )}
-                />
-                <span className="glyphicon glyphicon-calendar" onClick={() => certificationEndDateRef.current?.setFocus()}></span>
+            <div className="col-sm col-sm-10">
+              <div className="d-flex">
+                <div className="datepicker-wrapper">
+                  {/* Các field ngày này phụ thuộc vào việc đã chọn 資格 hay chưa. */}
+                  <Controller
+                    name="certificationEndDate"
+                    control={control}
+                    render={({ field }) => (
+                      <DatePicker
+                        ref={certificationEndDateRef}
+                        className={Boolean(errors.certificationEndDate) ? 'field-error-input' : undefined}
+                        placeholderText="yyyy/MM/dd"
+                        selected={field.value}
+                        onChange={(date) => field.onChange(date)}
+                        onBlur={field.onBlur}
+                        onKeyDown={preventManualDateInput}
+                        disabled={!isCertificationSelected}
+                        dateFormat="yyyy/MM/dd"
+                      />
+                    )}
+                  />
+                  <span className="glyphicon glyphicon-calendar" onClick={() => certificationEndDateRef.current?.setFocus()}></span>
+                </div>
               </div>
+              {errors.certificationEndDate ? (
+                <div className={getFieldErrorClassName()}>{errors.certificationEndDate.message}</div>
+              ) : null}
             </div>
           </li>
           <li className="form-group row d-flex">
             <label className="col-form-label col-sm-2"><i className="relative">点数:</i></label>
             <div className="col-sm col-sm-10">
               {/* Điểm số cũng chỉ được nhập khi người dùng đã chọn chứng chỉ. */}
-              <input type="text" className="form-control" disabled={!isCertificationSelected} {...register('score')} />
+              <input
+                type="text"
+                className={getFieldClassName(Boolean(errors.score))}
+                disabled={!isCertificationSelected}
+                {...register('score')}
+              />
+              {errors.score ? (
+                <div className={getFieldErrorClassName()}>{errors.score.message}</div>
+              ) : null}
             </div>
           </li>
           <li className="form-group row d-flex">

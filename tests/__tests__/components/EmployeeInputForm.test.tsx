@@ -37,6 +37,7 @@ describe('EmployeeInputForm', () => {
   const mockOnConfirm = jest.fn();
   const mockOnBack = jest.fn();
   const mockSetValue = jest.fn();
+  const mockClearErrors = jest.fn();
   const fieldValues: Record<string, string> = {
     departmentId: '',
     certificationId: '',
@@ -57,6 +58,7 @@ describe('EmployeeInputForm', () => {
     fieldValues.departmentId = '';
     fieldValues.certificationId = '';
     mockSetValue.mockReset();
+    mockClearErrors.mockReset();
 
     (useADM004 as jest.Mock).mockReturnValue({
       departments: [
@@ -69,7 +71,11 @@ describe('EmployeeInputForm', () => {
       register: mockRegister,
       control: mockControl,
       setValue: mockSetValue,
+      clearErrors: mockClearErrors,
       watch: jest.fn((name: string) => fieldValues[name] ?? ''),
+      formState: {
+        errors: {},
+      },
       onConfirm: mockOnConfirm,
       onBack: mockOnBack,
     });
@@ -125,6 +131,12 @@ describe('EmployeeInputForm', () => {
     expect(mockSetValue).toHaveBeenNthCalledWith(1, 'certificationStartDate', null);
     expect(mockSetValue).toHaveBeenNthCalledWith(2, 'certificationEndDate', null);
     expect(mockSetValue).toHaveBeenNthCalledWith(3, 'score', '');
+    expect(mockClearErrors).toHaveBeenCalledWith([
+      'certificationId',
+      'certificationStartDate',
+      'certificationEndDate',
+      'score',
+    ]);
   });
 
   it('does not clear dependent certification fields when user selects a certification', () => {
@@ -136,5 +148,6 @@ describe('EmployeeInputForm', () => {
 
     expect(mockCertificationOnChange).toHaveBeenCalledTimes(1);
     expect(mockSetValue).not.toHaveBeenCalled();
+    expect(mockClearErrors).not.toHaveBeenCalled();
   });
 });

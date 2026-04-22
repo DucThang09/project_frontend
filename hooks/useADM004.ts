@@ -1,11 +1,19 @@
-﻿'use client';
+'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { getDepartments } from '@/lib/api/department.api';
+import { validateEmployeeInput } from '@/lib/api/employee.api';
 import { getCertifications } from '@/lib/api/certification.api';
 import { EMPLOYEE_MODE_ADD, EMPLOYEE_MODE_EDIT } from '@/lib/constants/employee';
+import {
+  VALIDATION_MESSAGES,
+  type ValidationMessageCode,
+  formatValidationMessage,
+} from '@/lib/constants/messages';
+import { VALIDATION_LABELS } from '@/lib/constants/employee';
 import {
   clearEmployeeAddRestore,
   loadEmployeeAdd,
@@ -16,9 +24,30 @@ import {
   toEmployeeConfirmData,
   toEmployeeFormValues,
 } from '@/lib/storage/EmployeeInputForm';
+import { employeeInputFormSchema } from '@/lib/validation/EmployeeInputFormSchema';
 import type { DepartmentDTO } from '@/types/department';
 import type { CertificationDTO } from '@/types/certification';
-import type { EmployeeFormValues } from '@/types/employee';
+import type {
+  ApiMessage,
+  EmployeeFormValues,
+  EmployeeValidationRequest,
+} from '@/types/employee';
+
+const LABEL_TO_FIELD: Partial<Record<string, keyof EmployeeFormValues>> = {
+  [VALIDATION_LABELS.employeeLoginId]: 'employeeLoginId',
+  [VALIDATION_LABELS.departmentId]: 'departmentId',
+  [VALIDATION_LABELS.employeeName]: 'employeeName',
+  [VALIDATION_LABELS.employeeNameKana]: 'employeeNameKana',
+  [VALIDATION_LABELS.employeeBirthDate]: 'employeeBirthDate',
+  [VALIDATION_LABELS.employeeEmail]: 'employeeEmail',
+  [VALIDATION_LABELS.employeeTelephone]: 'employeeTelephone',
+  [VALIDATION_LABELS.employeeLoginPassword]: 'employeeLoginPassword',
+  [VALIDATION_LABELS.employeeLoginPasswordConfirm]: 'employeeLoginPasswordConfirm',
+  [VALIDATION_LABELS.certificationId]: 'certificationId',
+  [VALIDATION_LABELS.certificationStartDate]: 'certificationStartDate',
+  [VALIDATION_LABELS.certificationEndDate]: 'certificationEndDate',
+  [VALIDATION_LABELS.score]: 'score',
+};
 
 export function createEmployeeEmpty(): EmployeeFormValues {
   return {
@@ -45,33 +74,32 @@ export function useADM004() {
   const [certifications, setCertifications] = useState<CertificationDTO[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Khởi tạo form của màn add/edit.
+  // Initialize the add/edit form.
   const form = useForm<EmployeeFormValues>({
+    resolver: zodResolver(employeeInputFormSchema),
     defaultValues: createEmployeeEmpty(),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
   });
-  const { reset, handleSubmit } = form;
+  const { reset, handleSubmit, setError, clearErrors } = form;
 
-  // Đọc id từ query để phân giữa add mode và edit mode.
+  // Read the query param to determine add vs edit mode.
   const employeeId = searchParams.get('id');
-  const mode = employeeId ? EMPLOYEE_MODE_EDIT : EMPLOYEE_MODE_ADD; //Nếu có id thì là màn edit, không có thì là add
+  const mode = employeeId ? EMPLOYEE_MODE_EDIT : EMPLOYEE_MODE_ADD;
 
   useEffect(() => {
-    //Lấy dữ liệu đã lưu trước đó.
     const employeeInfo = loadEmployeeAdd();
-    //Kiểm tra có phải vừa từ màn confirm quay lại không.
     const isBackFromConfirm = RestoreEmployeeAdd();
 
     if (isBackFromConfirm && employeeInfo) {
-      //lấy toàn bộ dữ liệu đã lưu trong session vào lại form
       reset(toEmployeeFormValues(employeeInfo));
       clearEmployeeAddRestore();
-    } else if (mode === EMPLOYEE_MODE_EDIT ) {
-
+    } else if (mode === EMPLOYEE_MODE_EDIT) {
+      // TODO: implement edit mode
     } else if (!employeeInfo) {
       reset(createEmployeeEmpty());
     }
 
-    // load data cho dropdown
     let active = true;
     const fetchMasterData = async () => {
       const [departmentResult, certificationResult] = await Promise.allSettled([
@@ -79,7 +107,9 @@ export function useADM004() {
         getCertifications(),
       ]);
 
-      if (!active) return;
+      if (!active) {
+        return;
+      }
 
       const errors: string[] = [];
 
@@ -104,17 +134,98 @@ export function useADM004() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [mode, reset]);
 
-  
-  const onConfirm = handleSubmit((values) => {
-    const employeeInfo = toEmployeeAdd(values, departments, certifications);// lấy dữ liệu đã chuẩn hóa 
-    saveEmployeeAdd(employeeInfo);//lưu vào session 
+  const formatBackendMessage = (message: ApiMessage | undefined) => {
+    if (!message || !(message.code in VALIDATION_MESSAGES)) {
+      return formatValidationMessage('ER023');
+    }
+
+    return formatValidationMessage(
+      message.code as ValidationMessageCode,
+      ...message.params
+    );
+  };
+
+  const applyBackendValidationError = (message: ApiMessage | undefined) => {
+    if (!message) {
+      setErrorMessage(formatValidationMessage('ER023'));
+      return;
+    }
+
+    const formattedMessage = formatBackendMessage(message);
+
+    if (message.code === 'ER012') {
+      setError('certificationEndDate', {
+        type: 'server',
+        message: formattedMessage,
+      });
+      setErrorMessage('');
+      return;
+    }
+
+    if (message.code === 'ER017') {
+      setError('employeeLoginPasswordConfirm', {
+        type: 'server',
+        message: formattedMessage,
+      });
+      setErrorMessage('');
+      return;
+    }
+
+    const field = message.params[0] ? LABEL_TO_FIELD[message.params[0]] : undefined;
+    if (field) {
+      setError(field, {
+        type: 'server',
+        message: formattedMessage,
+      });
+      setErrorMessage('');
+      return;
+    }
+
+    setErrorMessage(formattedMessage);
+  };
+
+  const toEmployeeValidationRequest = (
+    values: EmployeeFormValues
+  ): EmployeeValidationRequest => {
+    const employeeInfo = toEmployeeAdd(values, departments, certifications);
+
+    return {
+      employeeLoginId: employeeInfo.employeeLoginId,
+      departmentId: employeeInfo.departmentId,
+      employeeName: employeeInfo.employeeName,
+      employeeNameKana: employeeInfo.employeeNameKana,
+      employeeBirthDate: employeeInfo.employeeBirthDate,
+      employeeEmail: employeeInfo.employeeEmail,
+      employeeTelephone: employeeInfo.employeeTelephone,
+      employeeLoginPassword: employeeInfo.employeeLoginPassword,
+      employeeLoginPasswordConfirm: employeeInfo.employeeLoginPasswordConfirm,
+      certificationId: employeeInfo.certificationId,
+      certificationStartDate: employeeInfo.certificationStartDate,
+      certificationEndDate: employeeInfo.certificationEndDate,
+      score: employeeInfo.score,
+    };
+  };
+
+  const onConfirm = handleSubmit(async (values) => {
+    clearErrors();
+    setErrorMessage('');
+
+    const validatePayload = toEmployeeValidationRequest(values);
+    const response = await validateEmployeeInput(validatePayload);
+
+    if (response.code !== 200) {
+      applyBackendValidationError(response.message);
+      return;
+    }
+
+    const employeeInfo = toEmployeeAdd(values, departments, certifications);
+    saveEmployeeAdd(employeeInfo);
     saveEmployeeConfirmData(toEmployeeConfirmData(employeeInfo));
     router.push('/employees/adm005');
   });
 
-  // Quay về màn danh sách
   const onBack = () => {
     router.push('/employees/adm002');
   };
