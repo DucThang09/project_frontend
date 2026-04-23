@@ -191,6 +191,7 @@ describe('useADM004', () => {
     });
 
     expect(validateEmployeeInput).toHaveBeenCalledWith({
+      employeeId: undefined,
       employeeLoginId: 'user01',
       departmentId: '2',
       employeeName: 'Test User',
@@ -265,5 +266,6 @@ describe('useADM004', () => {
     expect(saveEmployeeAdd).not.toHaveBeenCalled();
     expect(saveEmployeeConfirmData).not.toHaveBeenCalled();
     expect(mockPush).not.toHaveBeenCalledWith('/employees/adm005');
+    expect(result.current.errorMessage).not.toBe('');
   });
 });

@@ -1,21 +1,15 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { VALIDATION_MESSAGES } from '@/lib/constants/messages';
 
-export default function EmployeeComplete() {
+export default function SystemError() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const mode = searchParams.get('mode');
-  const message =
-    mode === 'edit'
-      ? VALIDATION_MESSAGES.MSG002
-      : VALIDATION_MESSAGES.MSG001;
 
   return (
     <div className="box-shadow">
       <div className="notification-box">
-        <h1 className="msg-title">{message}</h1>
+        <h1 className="msg-title">{VALIDATION_MESSAGES.ER015}</h1>
         <div className="notification-box-btn">
           <button
             type="button"

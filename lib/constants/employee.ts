@@ -17,4 +17,3 @@ export const VALIDATION_LABELS = {
   certificationEndDate: '失効日',
   score: '点数',
 } as const;
-

@@ -15,6 +15,7 @@ export default function EmployeeInputForm() {
     control,
     setValue,
     clearErrors,
+    trigger,
     watch,
     formState: { errors },
     onConfirm,
@@ -41,7 +42,7 @@ export default function EmployeeInputForm() {
 
   const getFieldErrorClassName = () => 'field-error-message';
 
-  const handleCertificationChange = (
+  const handleCertificationChange = async (
     event: React.ChangeEvent<HTMLSelectElement>
   ) => {
     certificationField.onChange(event);
@@ -56,7 +57,14 @@ export default function EmployeeInputForm() {
         'certificationEndDate',
         'score',
       ]);
+      return;
     }
+
+    await trigger([
+      'certificationStartDate',
+      'certificationEndDate',
+      'score',
+    ]);
   };
 
   return (

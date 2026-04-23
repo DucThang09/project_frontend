@@ -2,6 +2,7 @@ import type {
   EmployeeAdd,
   EmployeeConfirmData,
   EmployeeFormValues,
+  EmployeeMode,
 } from '@/types/employee';
 import type { DepartmentDTO } from '@/types/department';
 import type { CertificationDTO } from '@/types/certification';
@@ -41,11 +42,15 @@ export function toEmployeeAdd(
   values: EmployeeFormValues,
   departments: DepartmentDTO[],
   certifications: CertificationDTO[],
+  mode: EmployeeMode,
+  employeeId: string | null,
 ): EmployeeAdd {
   const dept = departments.find((d) => String(d.departmentId) === values.departmentId);
   const cert = certifications.find((c) => String(c.certificationId) === values.certificationId);
 
   return {
+    mode,
+    employeeId: employeeId ?? '',
     employeeLoginId: values.employeeLoginId.trim(),
     departmentId: values.departmentId,
     departmentName: dept?.departmentName ?? '',

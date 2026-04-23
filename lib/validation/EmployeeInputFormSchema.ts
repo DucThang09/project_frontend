@@ -102,12 +102,14 @@ export const employeeInputFormSchema = z.object({
       ),
     }),
 
+  // Nhóm chứng chỉ được kiểm tra chi tiết ở superRefine bên dưới.
   certificationId: z.string(),
   certificationStartDate: z.date().nullable(),
   certificationEndDate: z.date().nullable(),
   score: z.string(),
 })
   .superRefine((values, ctx) => {
+    // Chỉ báo lỗi khi người dùng đã nhập confirm password nhưng 2 giá trị không khớp.
     if (
       values.employeeLoginPasswordConfirm.length > 0 &&
       values.employeeLoginPassword !== values.employeeLoginPasswordConfirm
@@ -120,12 +122,14 @@ export const employeeInputFormSchema = z.object({
     }
   })
   .superRefine((values, ctx) => {
+    // Khi chưa chọn chứng chỉ thì bỏ qua toàn bộ rule liên quan.
     const hasCertification = values.certificationId.trim() !== '';
 
     if (!hasCertification) {
       return;
     }
 
+    // Nếu đã chọn chứng chỉ thì các field liên quan phải hợp lệ đồng bộ.
     if (!/^[1-9]\d*$/.test(values.certificationId.trim())) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

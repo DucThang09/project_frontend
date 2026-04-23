@@ -32,3 +32,26 @@ export async function validateEmployeeInput(
 
   return data;
 }
+
+export async function addEmployee(
+  payload: EmployeeValidationRequest
+): Promise<EmployeeValidationApiResponse> {
+  const { data } = await apiClient.post<EmployeeValidationApiResponse>(
+    EMPLOYEE_ENDPOINT,
+    payload
+  );
+
+  return data;
+}
+
+export async function updateEmployee(
+  employeeId: string,
+  payload: EmployeeValidationRequest
+): Promise<EmployeeValidationApiResponse> {
+  const { data } = await apiClient.put<EmployeeValidationApiResponse>(
+    `${EMPLOYEE_ENDPOINT}/${employeeId}`,
+    payload
+  );
+
+  return data;
+}
