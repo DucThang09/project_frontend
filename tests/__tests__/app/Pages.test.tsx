@@ -1,19 +1,21 @@
-import { render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
+import EmployeeDetailPage from '@/app/(protected)/employees/adm003/page';
 import EmployeeListPage from '@/app/(protected)/employees/adm002/page';
 import EmployeeEditPage from '@/app/(protected)/employees/adm004/page';
-import EmployeeDetailPage from '@/app/(protected)/employees/adm003/page';
 import EmployeeConfirmPage from '@/app/(protected)/employees/adm005/page';
 import EmployeeCompletePage from '@/app/(protected)/employees/adm006/page';
-import HomePage from '@/app/page';
 import RootLayout from '@/app/layout';
+import HomePage from '@/app/page';
 
-// Mock dependencies
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
     push: jest.fn(),
     replace: jest.fn(),
   }),
-  usePathname: () => '/', // Mock pathname for layout test
+  usePathname: () => '/',
+  useSearchParams: () => ({
+    get: jest.fn().mockReturnValue(null),
+  }),
 }));
 
 jest.mock('@/lib/api/department.api', () => ({
@@ -24,9 +26,38 @@ jest.mock('@/lib/api/certification.api', () => ({
   getCertifications: jest.fn().mockResolvedValue([]),
 }));
 
-jest.mock('@/lib/storage/employee-add', () => ({
-  clearEmployeeAddFlow: jest.fn(),
-  clearEmployeeAddRestoreFlag: jest.fn(),
+jest.mock('@/lib/api/employee.api', () => ({
+  getEmployees: jest.fn().mockResolvedValue({
+    code: 200,
+    totalRecords: 0,
+    employees: [],
+  }),
+  getEmployeeDetail: jest.fn().mockResolvedValue({
+    code: 200,
+    employee: {
+      employeeId: 30,
+      employeeLoginId: 'user01',
+      departmentId: 2,
+      departmentName: 'Development',
+      employeeName: 'Test User',
+      employeeNameKana: 'テスト',
+      employeeBirthDate: '2000-01-01',
+      employeeEmail: 'test@example.com',
+      employeeTelephone: '0123456789',
+      certificationId: 1,
+      certificationName: 'N1',
+      certificationStartDate: '2020-01-01',
+      certificationEndDate: '2022-01-01',
+      score: 850,
+    },
+  }),
+  validateEmployeeInput: jest.fn().mockResolvedValue({ code: 200 }),
+}));
+
+jest.mock('@/lib/storage/EmployeeInputForm', () => ({
+  clearEmployeeAdd: jest.fn(),
+  clearEmployeeAddRestore: jest.fn(),
+  RestoreEmployeeAdd: jest.fn().mockReturnValue(false),
   createEmptyEmployeeFormValues: () => ({
     employeeLoginId: '',
     departmentId: '',
@@ -42,8 +73,25 @@ jest.mock('@/lib/storage/employee-add', () => ({
     certificationEndDate: null,
     score: '',
   }),
-  formatDisplayDate: jest.fn(),
-  loadEmployeeAddDraft: jest.fn().mockReturnValue(null),
+  loadEmployeeAdd: jest.fn().mockReturnValue({
+    mode: 'add',
+    employeeId: '',
+    employeeLoginId: 'user01',
+    departmentId: '2',
+    departmentName: 'Development',
+    employeeName: 'Test User',
+    employeeNameKana: 'ﾃｽﾄ',
+    employeeBirthDate: '2000-01-01',
+    employeeEmail: 'test@example.com',
+    employeeTelephone: '0123456789',
+    employeeLoginPassword: 'secret123',
+    employeeLoginPasswordConfirm: 'secret123',
+    certificationId: '1',
+    certificationName: 'N1',
+    certificationStartDate: '2020-01-01',
+    certificationEndDate: '2022-01-01',
+    score: '850',
+  }),
   loadEmployeeConfirmData: jest.fn().mockReturnValue({
     employeeLoginId: 'user01',
     departmentName: 'Development',
@@ -57,12 +105,26 @@ jest.mock('@/lib/storage/employee-add', () => ({
     certificationEndDate: '2022/01/01',
     score: '850',
   }),
-  saveEmployeeAddDraft: jest.fn(),
+  saveEmployeeAdd: jest.fn(),
   saveEmployeeConfirmData: jest.fn(),
-  setEmployeeAddRestoreFlag: jest.fn(),
-  shouldRestoreEmployeeAddDraft: jest.fn().mockReturnValue(false),
-  toEmployeeAddDraft: jest.fn(),
+  toEmployeeAdd: jest.fn(),
+  toEmployeeConfirmData: jest.fn(),
   toEmployeeFormValues: jest.fn(),
+  toEmployeeFormValuesFromDetail: jest.fn().mockReturnValue({
+    employeeLoginId: 'user01',
+    departmentId: '2',
+    employeeName: 'Test User',
+    employeeNameKana: 'テスト',
+    employeeBirthDate: new Date('2000-01-01'),
+    employeeEmail: 'test@example.com',
+    employeeTelephone: '0123456789',
+    employeeLoginPassword: '',
+    employeeLoginPasswordConfirm: '',
+    certificationId: '1',
+    certificationStartDate: new Date('2020-01-01'),
+    certificationEndDate: new Date('2022-01-01'),
+    score: '850',
+  }),
 }));
 
 jest.mock('@/lib/storage/employee-list', () => ({
@@ -71,14 +133,26 @@ jest.mock('@/lib/storage/employee-list', () => ({
   clearEmployeeListState: jest.fn(),
 }));
 
+jest.mock('@/lib/storage/employee-detail', () => ({
+  loadEmployeeDetailId: jest.fn().mockReturnValue('30'),
+  saveEmployeeDetailId: jest.fn(),
+  clearEmployeeDetailId: jest.fn(),
+}));
 
-// Mock the auth hooks to prevent redirection during tests
 jest.mock('@/hooks/useAuth', () => ({
   useAuth: () => {},
   useGuest: () => {},
 }));
 
 describe('Page Snapshots', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('renders EmployeeListPage', () => {
     const { container } = render(<EmployeeListPage />);
     expect(container.textContent).toContain('検索');
@@ -91,12 +165,14 @@ describe('Page Snapshots', () => {
 
   it('renders EmployeeDetailPage', () => {
     const { container } = render(<EmployeeDetailPage />);
-    expect(container.textContent).toContain('ntmhuong');
+    expect(container.textContent).toContain('読み込み中');
   });
 
-  it('renders EmployeeConfirmPage', () => {
+  it('renders EmployeeConfirmPage', async () => {
     const { container } = render(<EmployeeConfirmPage />);
-    expect(container.textContent).toContain('情報確認');
+    await waitFor(() => {
+      expect(container.textContent).toContain('情報確認');
+    });
   });
 
   it('renders EmployeeCompletePage', () => {
@@ -110,14 +186,7 @@ describe('Page Snapshots', () => {
   });
 
   it('renders RootLayout', () => {
-    // Suppress React warning about <html> in <div> during testing
-    const originalError = console.error;
-    console.error = jest.fn();
-
     const { container } = render(<RootLayout><div>Test Child</div></RootLayout>);
     expect(container.textContent).toContain('Luvina Software');
-
-    console.error = originalError;
   });
 });
-

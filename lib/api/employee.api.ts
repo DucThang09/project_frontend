@@ -1,4 +1,5 @@
 import type {
+  EmployeeDetailApiResponse,
   EmployeeListApiResponse,
   EmployeeSearchParams,
   EmployeeValidationApiResponse,
@@ -6,10 +7,8 @@ import type {
 } from '@/types/employee';
 import { apiClient } from './client';
 
-// Endpoint lấy danh sách nhân viên.
 const EMPLOYEE_ENDPOINT = '/employee';
 
-// Gọi API lấy danh sách nhân viên theo điều kiện hiện tại.
 export async function getEmployees(
   params?: EmployeeSearchParams
 ): Promise<EmployeeListApiResponse> {
@@ -21,7 +20,16 @@ export async function getEmployees(
   return data;
 }
 
-// Gọi API validate employee input trước khi chuyển sang màn confirm.
+export async function getEmployeeDetail(
+  employeeId: string
+): Promise<EmployeeDetailApiResponse> {
+  const { data } = await apiClient.get<EmployeeDetailApiResponse>(
+    `${EMPLOYEE_ENDPOINT}/${employeeId}`
+  );
+
+  return data;
+}
+
 export async function validateEmployeeInput(
   payload: EmployeeValidationRequest
 ): Promise<EmployeeValidationApiResponse> {

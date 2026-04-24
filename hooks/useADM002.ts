@@ -8,6 +8,10 @@ import { EMPLOYEE_LIST_PAGE_SIZE } from '@/lib/constants/employee';
 import { getDepartments } from '@/lib/api/department.api';
 import { clearEmployeeAdd} from '@/lib/storage/EmployeeInputForm';
 import {
+  clearEmployeeDetailId,
+  saveEmployeeDetailId,
+} from '@/lib/storage/employee-detail';
+import {
   loadEmployeeListState,
   saveEmployeeListState,
   type EmployeeListSortField,
@@ -316,7 +320,18 @@ export function useEmployeeList() {
       currentSortField,
     });
     clearEmployeeAdd();
+    clearEmployeeDetailId();
     router.push('/employees/adm004');
+  };
+
+  /**
+   * Chuyen sang man hinh chi tiet nhan vien ma khong de ID tren URL.
+   *
+   * @param employeeId ID nhan vien can xem chi tiet
+   */
+  const handleViewDetail = (employeeId: number) => {
+    saveEmployeeDetailId(employeeId);
+    router.push('/employees/adm003');
   };
 
   useEffect(() => {
@@ -369,5 +384,6 @@ export function useEmployeeList() {
     handlePreviousPage,
     handleNextPage,
     handleAddNew,
+    handleViewDetail,
   };
 }

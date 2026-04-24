@@ -1,5 +1,6 @@
 import type {
   EmployeeAdd,
+  EmployeeDetail,
   EmployeeConfirmData,
   EmployeeFormValues,
   EmployeeMode,
@@ -85,6 +86,27 @@ export function toEmployeeFormValues(data: EmployeeAdd): EmployeeFormValues {
     certificationStartDate: parseDate(data.certificationStartDate),
     certificationEndDate: parseDate(data.certificationEndDate),
     score: data.score,
+  };
+}
+
+// Chuyen data chi tiet nhan vien tu API thanh du lieu form de bind o man sua.
+export function toEmployeeFormValuesFromDetail(
+  data: EmployeeDetail
+): EmployeeFormValues {
+  return {
+    employeeLoginId: data.employeeLoginId,
+    departmentId: String(data.departmentId),
+    employeeName: data.employeeName,
+    employeeNameKana: data.employeeNameKana,
+    employeeBirthDate: parseDate(data.employeeBirthDate),
+    employeeEmail: data.employeeEmail,
+    employeeTelephone: data.employeeTelephone ?? '',
+    employeeLoginPassword: '',
+    employeeLoginPasswordConfirm: '',
+    certificationId: data.certificationId ? String(data.certificationId) : '',
+    certificationStartDate: parseDate(data.certificationStartDate),
+    certificationEndDate: parseDate(data.certificationEndDate),
+    score: data.score != null ? String(data.score) : '',
   };
 }
 //dữ liệu hiển thị ở confirm

@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import React from 'react';
 import { useEmployeeList } from '@/hooks/useADM002';
 
@@ -25,6 +24,7 @@ export default function EmployeeList() {
     handlePreviousPage,
     handleNextPage,
     handleAddNew,
+    handleViewDetail,
   } = useEmployeeList();
 
   const renderPagination = () => {
@@ -223,9 +223,20 @@ export default function EmployeeList() {
               employees.map((employee) => (
                 <React.Fragment key={employee.employeeId}>
                   <div className="bor-l-none text-center">
-                    <Link href={`/employees/adm003?id=${employee.employeeId}`}>
+                    <button
+                      type="button"
+                      onClick={() => handleViewDetail(employee.employeeId)}
+                      style={{
+                        color: '#2c7be5',
+                        textDecoration: 'underline',
+                        background: 'none',
+                        border: 'none',
+                        padding: 0,
+                        cursor: 'pointer',
+                      }}
+                    >
                       {employee.employeeId}
-                    </Link>
+                    </button>
                   </div>
                   <div>{employee.employeeName}</div>
                   <div>{formatDate(employee.employeeBirthDate)}</div>

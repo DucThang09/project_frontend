@@ -1,7 +1,7 @@
-// Kiểu sắp xếp hỗ trợ ở màn hình danh sách.
+// Kieu sap xep ho tro o man hinh danh sach.
 export type SortOrder = 'ASC' | 'DESC';
 
-// Dữ liệu một bản ghi nhân viên trả về từ API.
+// Du lieu mot ban ghi nhan vien tra ve tu API danh sach.
 export interface Employee {
   readonly employeeId: number;
   readonly employeeName: string;
@@ -14,13 +14,13 @@ export interface Employee {
   readonly score: number | null;
 }
 
-// Mã message và tham số đi kèm từ backend.
+// Ma message va tham so di kem tu backend.
 export interface ApiMessage {
   readonly code: string;
   readonly params: string[];
 }
 
-// Cấu trúc response của API danh sách nhân viên.
+// Cau truc response cua API danh sach nhan vien.
 export interface EmployeeListApiResponse {
   readonly code: number;
   readonly totalRecords: number;
@@ -28,9 +28,32 @@ export interface EmployeeListApiResponse {
   readonly message?: ApiMessage;
 }
 
+// Du lieu chi tiet cua mot nhan vien tra ve tu API.
+export interface EmployeeDetail {
+  readonly employeeId: number;
+  readonly employeeLoginId: string;
+  readonly departmentId: number;
+  readonly departmentName: string;
+  readonly employeeName: string;
+  readonly employeeNameKana: string;
+  readonly employeeBirthDate: string | null;
+  readonly employeeEmail: string;
+  readonly employeeTelephone: string | null;
+  readonly certificationId: number | null;
+  readonly certificationName: string | null;
+  readonly certificationStartDate: string | null;
+  readonly certificationEndDate: string | null;
+  readonly score: number | null;
+}
 
+// Cau truc response cua API chi tiet nhan vien.
+export interface EmployeeDetailApiResponse {
+  readonly code: number;
+  readonly employee?: EmployeeDetail;
+  readonly message?: ApiMessage;
+}
 
-// Điều kiện tìm kiếm danh sách nhân viên.
+// Dieu kien tim kiem danh sach nhan vien.
 export interface EmployeeSearchParams {
   employee_name?: string;
   department_id?: number;
@@ -41,7 +64,7 @@ export interface EmployeeSearchParams {
   limit?: number;
 }
 
-// Dữ liệu form cho màn thêm/sửa nhân viên.
+// Du lieu form cho man them/sua nhan vien.
 export interface EmployeeFormValues {
   employeeLoginId: string;
   departmentId: string;
@@ -58,7 +81,7 @@ export interface EmployeeFormValues {
   score: string;
 }
 
-// Payload gửi backend để validate employee input.
+// Payload gui backend de validate employee input.
 export interface EmployeeValidationRequest {
   employeeId?: string;
   employeeLoginId: string;
@@ -75,13 +98,16 @@ export interface EmployeeValidationRequest {
   certificationEndDate: string | null;
   score: string;
 }
-// Cấu trúc response của API validate employee input.
+
+// Cau truc response cua API validate employee input.
 export interface EmployeeValidationApiResponse {
   readonly code: number;
   readonly message?: ApiMessage;
 }
-// Dữ liệu tạm lưu của màn add trước khi sang confirm.
+
+// Du lieu tam luu cua man add truoc khi sang confirm.
 export type EmployeeMode = 'add' | 'edit';
+
 export interface EmployeeAdd {
   mode: EmployeeMode;
   employeeId: string;
@@ -102,7 +128,7 @@ export interface EmployeeAdd {
   score: string;
 }
 
-// Dữ liệu hiển thị ở màn confirm add employee.
+// Du lieu hien thi o man confirm add employee.
 export interface EmployeeConfirmData {
   employeeLoginId: string;
   departmentName: string;

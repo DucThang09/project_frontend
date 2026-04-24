@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
+import { EMPLOYEE_MODE_EDIT } from '@/lib/constants/employee';
 import { VALIDATION_MESSAGES } from '@/lib/constants/messages';
 
 export default function EmployeeComplete() {
@@ -8,7 +9,7 @@ export default function EmployeeComplete() {
   const searchParams = useSearchParams();
   const mode = searchParams.get('mode');
   const message =
-    mode === 'edit'
+    mode === EMPLOYEE_MODE_EDIT
       ? VALIDATION_MESSAGES.MSG002
       : VALIDATION_MESSAGES.MSG001;
 

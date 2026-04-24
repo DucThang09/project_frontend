@@ -42,7 +42,7 @@ export const employeeInputFormSchema = z.object({
     .max(125, {
       message: formatValidationMessage('ER006', VALIDATION_LABELS.employeeNameKana, '125'),
     })
-    .regex(/^[ァ-ヶー]+$/, {
+    .regex(/^[\uFF66-\uFF9D\uFF9E\uFF9F]+$/, {
       message: formatValidationMessage('ER009', VALIDATION_LABELS.employeeNameKana),
     }),
 

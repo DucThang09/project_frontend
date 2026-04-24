@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { addEmployee, updateEmployee } from '@/lib/api/employee.api';
+import { EMPLOYEE_MODE_EDIT } from '@/lib/constants/employee';
 import {
   clearEmployeeAdd,
   loadEmployeeAdd,
@@ -24,41 +25,41 @@ export function useADM005() {
   useEffect(() => {
     // ADM005 chỉ hoạt động khi đã có dữ liệu lưu từ ADM004.
     const confirmData = loadEmployeeConfirmData();
-    const savedEmployee = loadEmployeeAdd();
+    const employeeData = loadEmployeeAdd();
 
-    if (!confirmData || !savedEmployee) {
+    if (!confirmData || !employeeData) {
       router.replace('/employees/adm004');
       return;
     }
 
     setData(confirmData);
-    setEmployeeData(savedEmployee);
+    setEmployeeData(employeeData);
   }, [router]);
 
   const handleBack = () => {
-    // Đánh dấu để ADM004 restore lại dữ liệu đã nhập.
+    // khi ấn back ở ADM005 restore lại dữ liệu đã nhập.
     setEmployeeAddRestore();
     router.push('/employees/adm004');
   };
 
   // Dùng lại payload validate để gọi API add/update.
   const toValidationRequest = (
-    savedEmployee: EmployeeAdd
+    employeeInfo: EmployeeAdd
   ): EmployeeValidationRequest => ({
-    employeeId: savedEmployee.employeeId || undefined,
-    employeeLoginId: savedEmployee.employeeLoginId,
-    departmentId: savedEmployee.departmentId,
-    employeeName: savedEmployee.employeeName,
-    employeeNameKana: savedEmployee.employeeNameKana,
-    employeeBirthDate: savedEmployee.employeeBirthDate,
-    employeeEmail: savedEmployee.employeeEmail,
-    employeeTelephone: savedEmployee.employeeTelephone,
-    employeeLoginPassword: savedEmployee.employeeLoginPassword,
-    employeeLoginPasswordConfirm: savedEmployee.employeeLoginPasswordConfirm,
-    certificationId: savedEmployee.certificationId,
-    certificationStartDate: savedEmployee.certificationStartDate,
-    certificationEndDate: savedEmployee.certificationEndDate,
-    score: savedEmployee.score,
+    employeeId: employeeInfo.employeeId || undefined,
+    employeeLoginId: employeeInfo.employeeLoginId,
+    departmentId: employeeInfo.departmentId,
+    employeeName: employeeInfo.employeeName,
+    employeeNameKana: employeeInfo.employeeNameKana,
+    employeeBirthDate: employeeInfo.employeeBirthDate,
+    employeeEmail: employeeInfo.employeeEmail,
+    employeeTelephone: employeeInfo.employeeTelephone,
+    employeeLoginPassword: employeeInfo.employeeLoginPassword,
+    employeeLoginPasswordConfirm: employeeInfo.employeeLoginPasswordConfirm,
+    certificationId: employeeInfo.certificationId,
+    certificationStartDate: employeeInfo.certificationStartDate,
+    certificationEndDate: employeeInfo.certificationEndDate,
+    score: employeeInfo.score,
   });
 
   const handleOk = async () => {
@@ -72,7 +73,8 @@ export function useADM005() {
     try {
       const payload = toValidationRequest(employeeData);
       // Có employeeId thì gọi update, ngược lại gọi add.
-      const response = employeeData.mode === 'edit' && employeeData.employeeId
+      const response =
+        employeeData.mode === EMPLOYEE_MODE_EDIT && employeeData.employeeId
         ? await updateEmployee(employeeData.employeeId, payload)
         : await addEmployee(payload);
 

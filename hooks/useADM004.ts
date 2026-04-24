@@ -4,9 +4,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
-import { getDepartments } from '@/lib/api/department.api';
-import { validateEmployeeInput } from '@/lib/api/employee.api';
 import { getCertifications } from '@/lib/api/certification.api';
+import { getDepartments } from '@/lib/api/department.api';
+import {
+  getEmployeeDetail,
+  validateEmployeeInput,
+} from '@/lib/api/employee.api';
 import {
   EMPLOYEE_MODE_ADD,
   EMPLOYEE_MODE_EDIT,
@@ -26,17 +29,18 @@ import {
   toEmployeeAdd,
   toEmployeeConfirmData,
   toEmployeeFormValues,
+  toEmployeeFormValuesFromDetail,
 } from '@/lib/storage/EmployeeInputForm';
+import { loadEmployeeDetailId } from '@/lib/storage/employee-detail';
 import { employeeInputFormSchema } from '@/lib/validation/EmployeeInputFormSchema';
-import type { DepartmentDTO } from '@/types/department';
 import type { CertificationDTO } from '@/types/certification';
+import type { DepartmentDTO } from '@/types/department';
 import type {
   ApiMessage,
   EmployeeFormValues,
   EmployeeValidationRequest,
 } from '@/types/employee';
 
-// Map label backend trả về sang đúng field của react-hook-form.
 const LABEL_TO_FIELD: Partial<Record<string, keyof EmployeeFormValues>> = {
   [VALIDATION_LABELS.employeeLoginId]: 'employeeLoginId',
   [VALIDATION_LABELS.departmentId]: 'departmentId',
@@ -79,7 +83,6 @@ export function useADM004() {
   const [certifications, setCertifications] = useState<CertificationDTO[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Validate lần đầu, sau đó validate ngay khi người dùng sửa.
   const form = useForm<EmployeeFormValues>({
     resolver: zodResolver(employeeInputFormSchema),
     defaultValues: createEmployeeEmpty(),
@@ -88,28 +91,14 @@ export function useADM004() {
   });
   const { reset, handleSubmit, setError, clearErrors } = form;
 
-  // Có id thì coi là màn edit, ngược lại là màn add.
-  const employeeId = searchParams.get('id');
+  const employeeId = searchParams.get('id') ?? loadEmployeeDetailId();
   const mode = employeeId ? EMPLOYEE_MODE_EDIT : EMPLOYEE_MODE_ADD;
 
   useEffect(() => {
-    // Quay lại từ confirm thì restore dữ liệu đã nhập trước đó.
     const employeeInfo = loadEmployeeAdd();
     const isBackFromConfirm = RestoreEmployeeAdd();
-
-    if (isBackFromConfirm && employeeInfo) {
-      reset(toEmployeeFormValues(employeeInfo));
-      clearEmployeeAddRestore();
-    } else if (mode === EMPLOYEE_MODE_EDIT) {
-      // Màn sửa chưa có luồng load dữ liệu thật từ backend.
-    } else if (!employeeInfo) {
-      reset(createEmployeeEmpty());
-    }
-
-    
     let active = true;
 
-    // Tải master data cần cho combobox phòng ban và chứng chỉ.
     const fetchMasterData = async () => {
       const [departmentResult, certificationResult] = await Promise.allSettled([
         getDepartments(),
@@ -126,26 +115,58 @@ export function useADM004() {
         setDepartments(departmentResult.value);
       } else {
         setDepartments([]);
-        errors.push('ã‚°ãƒ«ãƒ¼ãƒ—ä¸€è¦§ã®å–å¾—ã«å¤±æ•—ã—ã¾ã—ãŸã€‚');
+        errors.push('グループ一覧の取得に失敗しました。');
       }
 
       if (certificationResult.status === 'fulfilled') {
         setCertifications(certificationResult.value);
       } else {
         setCertifications([]);
-        errors.push('è³‡æ ¼ä¸€è¦§ã®å–å¾—ã«å¤±æ•—ã—ã¾ã—ãŸã€‚');
+        errors.push('資格一覧の取得に失敗しました。');
       }
 
       setErrorMessage(errors.join(' '));
     };
+
+    const initializeForm = async () => {
+      if (isBackFromConfirm && employeeInfo) {
+        reset(toEmployeeFormValues(employeeInfo));
+        clearEmployeeAddRestore();
+        return;
+      }
+
+      if (mode === EMPLOYEE_MODE_EDIT && employeeId) {
+        try {
+          const response = await getEmployeeDetail(employeeId);
+
+          if (!active || response.code !== 200 || !response.employee) {
+            router.push('/employees/system-error');
+            return;
+          }
+
+          reset(toEmployeeFormValuesFromDetail(response.employee));
+          return;
+        } catch {
+          if (active) {
+            router.push('/employees/system-error');
+          }
+          return;
+        }
+      }
+
+      if (!employeeInfo) {
+        reset(createEmployeeEmpty());
+      }
+    };
+
     fetchMasterData();
+    initializeForm();
 
     return () => {
       active = false;
     };
-  }, [mode, reset]);
+  }, [employeeId, mode, reset, router]);
 
-  // Dùng mã lỗi và params từ backend để dựng message hiển thị.
   const formatBackendMessage = (message: ApiMessage | undefined) => {
     if (!message || !(message.code in VALIDATION_MESSAGES)) {
       return formatValidationMessage('ER023');
@@ -157,7 +178,6 @@ export function useADM004() {
     );
   };
 
-  // Một số mã lỗi lên box tổng, còn lại map về field nếu xác định được.
   const applyBackendValidationError = (message: ApiMessage | undefined) => {
     if (!message) {
       setErrorMessage(formatValidationMessage('ER023'));
@@ -166,13 +186,11 @@ export function useADM004() {
 
     const formattedMessage = formatBackendMessage(message);
 
-    // Hai lỗi này hiển thị ở box lỗi tổng phía trên form.
     if (message.code === 'ER003' || message.code === 'ER004') {
       setErrorMessage(formattedMessage);
       return;
     }
 
-    // Lỗi quan hệ ngày chứng chỉ thì gắn trực tiếp vào field ngày hết hạn.
     if (message.code === 'ER012') {
       setError('certificationEndDate', {
         type: 'server',
@@ -182,7 +200,6 @@ export function useADM004() {
       return;
     }
 
-    // Lỗi confirm password thì luôn gắn vào field xác nhận mật khẩu.
     if (message.code === 'ER017') {
       setError('employeeLoginPasswordConfirm', {
         type: 'server',
@@ -192,10 +209,10 @@ export function useADM004() {
       return;
     }
 
-    // Các lỗi còn lại thử map từ label backend sang field tương ứng.
     const field = message.params[0]
       ? LABEL_TO_FIELD[message.params[0]]
       : undefined;
+
     if (field) {
       setError(field, {
         type: 'server',
@@ -211,7 +228,6 @@ export function useADM004() {
   const toEmployeeValidationRequest = (
     values: EmployeeFormValues
   ): EmployeeValidationRequest => {
-    // Chuẩn hóa lại dữ liệu giống lúc lưu sang màn confirm.
     const employeeInfo = toEmployeeAdd(
       values,
       departments,
@@ -238,12 +254,10 @@ export function useADM004() {
     };
   };
 
-  // Chỉ lưu sang confirm khi backend validate pass.
   const onConfirm = handleSubmit(async (values) => {
     clearErrors();
     setErrorMessage('');
 
-    // Gọi backend validate lại trước khi cho sang màn confirm.
     const validatePayload = toEmployeeValidationRequest(values);
     const response = await validateEmployeeInput(validatePayload);
 
@@ -252,7 +266,6 @@ export function useADM004() {
       return;
     }
 
-    // Lưu cả dữ liệu gốc và dữ liệu hiển thị để ADM005 dùng lại.
     const employeeInfo = toEmployeeAdd(
       values,
       departments,
@@ -260,6 +273,7 @@ export function useADM004() {
       mode,
       employeeId
     );
+
     saveEmployeeAdd(employeeInfo);
     saveEmployeeConfirmData(toEmployeeConfirmData(employeeInfo));
     router.push('/employees/adm005');

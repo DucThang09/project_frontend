@@ -7,12 +7,22 @@ import {
   loadEmployeeListState,
   saveEmployeeListState,
 } from '@/lib/storage/employee-list';
-import { clearEmployeeAddFlow } from '@/lib/storage/EmployeeInputForm';
+import { clearEmployeeAdd } from '@/lib/storage/EmployeeInputForm';
+import {
+  clearEmployeeDetailId,
+  saveEmployeeDetailId,
+} from '@/lib/storage/employee-detail';
 
 jest.mock('@/lib/api/employee.api');
 jest.mock('@/lib/api/department.api');
 jest.mock('@/lib/storage/employee-list');
-jest.mock('@/lib/storage/employee-add');
+jest.mock('@/lib/storage/EmployeeInputForm', () => ({
+  clearEmployeeAdd: jest.fn(),
+}));
+jest.mock('@/lib/storage/employee-detail', () => ({
+  clearEmployeeDetailId: jest.fn(),
+  saveEmployeeDetailId: jest.fn(),
+}));
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
 }));
@@ -87,8 +97,24 @@ describe('useEmployeeList', () => {
     });
 
     expect(saveEmployeeListState).toHaveBeenLastCalledWith(restoredListState);
-    expect(clearEmployeeAddFlow).toHaveBeenCalled();
+    expect(clearEmployeeAdd).toHaveBeenCalled();
+    expect(clearEmployeeDetailId).toHaveBeenCalled();
     expect(mockPush).toHaveBeenCalledWith('/employees/adm004');
+  });
+
+  it('stores hidden employee id before navigating to detail page', async () => {
+    (loadEmployeeListState as jest.Mock).mockReturnValue(null);
+
+    const { result } = renderHook(() => useEmployeeList());
+
+    await waitFor(() => expect(getEmployees).toHaveBeenCalled());
+
+    act(() => {
+      result.current.handleViewDetail(30);
+    });
+
+    expect(saveEmployeeDetailId).toHaveBeenCalledWith(30);
+    expect(mockPush).toHaveBeenCalledWith('/employees/adm003');
   });
 
   it('sends updated sort params to API when sorting by employee name', async () => {
