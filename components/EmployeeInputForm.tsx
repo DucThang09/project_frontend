@@ -5,6 +5,7 @@ import { Controller } from 'react-hook-form';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useADM004 } from '@/hooks/useADM004';
+import { EMPLOYEE_MODE_EDIT } from '@/lib/constants/employee';
 
 export default function EmployeeInputForm() {
   const {
@@ -18,6 +19,7 @@ export default function EmployeeInputForm() {
     trigger,
     watch,
     formState: { errors },
+    mode,
     onConfirm,
     onBack,
   } = useADM004();
@@ -29,6 +31,7 @@ export default function EmployeeInputForm() {
   const selectedDepartmentId = watch('departmentId');
   const selectedCertificationId = watch('certificationId');
   const isCertificationSelected = selectedCertificationId !== '';
+  const isEditMode = mode === EMPLOYEE_MODE_EDIT;
   const certificationField = register('certificationId');
 
   // Các ô ngày chỉ được chọn từ calendar, không cho nhập tay.
@@ -38,6 +41,10 @@ export default function EmployeeInputForm() {
 
   const getFieldClassName = (hasError: boolean) => (
     hasError ? 'form-control field-error-input' : 'form-control'
+  );
+
+  const getEditLockedFieldClassName = (hasError: boolean) => (
+    isEditMode ? `${getFieldClassName(hasError)} edit-locked-field` : getFieldClassName(hasError)
   );
 
   const getFieldErrorClassName = () => 'field-error-message';
@@ -82,7 +89,8 @@ export default function EmployeeInputForm() {
             <div className="col-sm col-sm-10">
               <input
                 type="text"
-                className={getFieldClassName(Boolean(errors.employeeLoginId))}
+                className={getEditLockedFieldClassName(Boolean(errors.employeeLoginId))}
+                disabled={isEditMode}
                 {...register('employeeLoginId')}
               />
               {errors.employeeLoginId ? (
@@ -197,7 +205,8 @@ export default function EmployeeInputForm() {
             <div className="col-sm col-sm-10">
               <input
                 type="password"
-                className={getFieldClassName(Boolean(errors.employeeLoginPassword))}
+                className={getEditLockedFieldClassName(Boolean(errors.employeeLoginPassword))}
+                disabled={isEditMode}
                 {...register('employeeLoginPassword')}
               />
               {errors.employeeLoginPassword ? (
@@ -212,7 +221,8 @@ export default function EmployeeInputForm() {
             <div className="col-sm col-sm-10">
               <input
                 type="password"
-                className={getFieldClassName(Boolean(errors.employeeLoginPasswordConfirm))}
+                className={getEditLockedFieldClassName(Boolean(errors.employeeLoginPasswordConfirm))}
+                disabled={isEditMode}
                 {...register('employeeLoginPasswordConfirm')}
               />
               {errors.employeeLoginPasswordConfirm ? (

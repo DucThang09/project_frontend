@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import EmployeeInputForm from '@/components/EmployeeInputForm';
 import { useADM004 } from '@/hooks/useADM004';
+import { EMPLOYEE_MODE_ADD, EMPLOYEE_MODE_EDIT } from '@/lib/constants/employee';
 
 jest.mock('@/hooks/useADM004');
 jest.mock('react-hook-form', () => {
@@ -76,6 +77,7 @@ describe('EmployeeInputForm', () => {
       formState: {
         errors: {},
       },
+      mode: EMPLOYEE_MODE_ADD,
       onConfirm: mockOnConfirm,
       onBack: mockOnBack,
     });
@@ -149,5 +151,31 @@ describe('EmployeeInputForm', () => {
     expect(mockCertificationOnChange).toHaveBeenCalledTimes(1);
     expect(mockSetValue).not.toHaveBeenCalled();
     expect(mockClearErrors).not.toHaveBeenCalled();
+  });
+
+  it('disables account and password fields in edit mode', () => {
+    (useADM004 as jest.Mock).mockReturnValue({
+      departments: [],
+      certifications: [],
+      errorMessage: '',
+      register: mockRegister,
+      control: mockControl,
+      setValue: mockSetValue,
+      clearErrors: mockClearErrors,
+      trigger: jest.fn(),
+      watch: jest.fn((name: string) => fieldValues[name] ?? ''),
+      formState: {
+        errors: {},
+      },
+      mode: EMPLOYEE_MODE_EDIT,
+      onConfirm: mockOnConfirm,
+      onBack: mockOnBack,
+    });
+
+    const { container } = render(<EmployeeInputForm />);
+
+    expect(container.querySelector('input[name="employeeLoginId"]')).toBeDisabled();
+    expect(container.querySelector('input[name="employeeLoginPassword"]')).toBeDisabled();
+    expect(container.querySelector('input[name="employeeLoginPasswordConfirm"]')).toBeDisabled();
   });
 });

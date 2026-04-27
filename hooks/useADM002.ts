@@ -10,12 +10,12 @@ import { clearEmployeeAdd} from '@/lib/storage/EmployeeInputForm';
 import {
   clearEmployeeDetailId,
   saveEmployeeDetailId,
-} from '@/lib/storage/employee-detail';
+} from '@/lib/storage/employeeDetail';
 import {
   loadEmployeeListState,
   saveEmployeeListState,
   type EmployeeListSortField,
-} from '@/lib/storage/employee-list';
+} from '@/lib/storage/employeeList';
 import type { DepartmentDTO } from '@/types/department';
 import type {
   Employee,
@@ -24,7 +24,9 @@ import type {
 } from '@/types/employee';
 
 /**
- * Hook quản lý dữ liệu và trạng thái cho màn hình danh sách nhân viên.
+ * Quản lý dữ liệu và trạng thái cho màn hình danh sách nhân viên ADM002.
+ *
+ * @returns Dữ liệu cần thiết cho component danh sách nhân viên.
  */
 export function useEmployeeList() {
   const router = useRouter();
@@ -37,7 +39,6 @@ export function useEmployeeList() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
   const [emptyMessage, setEmptyMessage] = useState('');
-  const [loading, setLoading] = useState(true);
   const [committedName, setCommittedName] = useState(restoredListState?.employeeName ?? '');
   const [committedGroup, setCommittedGroup] = useState(restoredListState?.departmentId ?? '');
   const [currentPage, setCurrentPage] = useState(restoredListState?.currentPage ?? 0);
@@ -46,59 +47,48 @@ export function useEmployeeList() {
   const [ordEndDate, setOrdEndDate] = useState<SortOrder>(restoredListState?.ordEndDate ?? 'ASC');
   const [currentSortField, setCurrentSortField] = useState<EmployeeListSortField>(restoredListState?.currentSortField ?? 'employee_name');
   const [departments, setDepartments] = useState<DepartmentDTO[]>([]);
-  const [isListStateReady, setIsListStateReady] = useState(false);
   const limit = EMPLOYEE_LIST_PAGE_SIZE;
   const totalPages = Math.ceil(totalRecords / limit);
-  const { register, handleSubmit, reset, watch, getValues } = useForm<SearchFormValues>({
+  const { register, handleSubmit, reset } = useForm<SearchFormValues>({
     defaultValues: {
-      employeeName: restoredListState?.formEmployeeName ?? restoredListState?.employeeName ?? '',
-      departmentId: restoredListState?.formDepartmentId ?? restoredListState?.departmentId ?? '',
+      employeeName: restoredListState?.employeeName ?? '',
+      departmentId: restoredListState?.departmentId ?? '',
     },
   });
-  const formEmployeeName = watch('employeeName');
-  const formDepartmentId = watch('departmentId');
 
+  /**
+   * lấy điều kiện tìm kiếm từ storage khi quay lại ADM002.
+   */
   useEffect(() => {
+    // nếu không có dữ liệu danh sách đã lưu trong session thì return.
     if (!restoredListState) {
-      setIsListStateReady(true);
       return;
     }
-
+    //đưa lại giá trị tìm kiếm đã lưu vào form
     reset({
-      employeeName: restoredListState.formEmployeeName ?? restoredListState.employeeName,
-      departmentId: restoredListState.formDepartmentId ?? restoredListState.departmentId,
-    });
-    setIsListStateReady(true);
-  }, [reset, restoredListState]);
-
-  useEffect(() => {
-    if (!restoredListState || departments.length === 0) {
-      return;
-    }
-
-    reset({
-      employeeName: restoredListState.formEmployeeName ?? restoredListState.employeeName,
-      departmentId: restoredListState.formDepartmentId ?? restoredListState.departmentId,
+      employeeName: restoredListState.employeeName,
+      departmentId: restoredListState.departmentId,
     });
   }, [departments, reset, restoredListState]);
 
   /**
-   * Đảo chiều sắp xếp giữa tăng dần và giảm dần.
+   * Đảo chiều thứ tự sắp xếp giữa tăng dần và giảm dần.
    *
-   * @param value thứ tự sắp xếp hiện tại
-   * @returns thứ tự sắp xếp sau khi đảo
+   * @param value Thứ tự sắp xếp hiện tại.
+   * @returns Thứ tự sắp xếp sau khi đảo chiều.
    */
   const toggleSortOrder = (value: SortOrder): SortOrder => (
     value === 'ASC' ? 'DESC' : 'ASC'
   );
 
   /**
-   * Lấy danh sách nhân viên theo điều kiện tìm kiếm và phân trang.
+   * Lấy danh sách nhân viên theo điều kiện tìm kiếm, sắp xếp và phân trang.
+   *
+   * @returns  hoàn thành sau khi cập nhật state danh sách nhân viên.
    */
   const fetchEmployees = useCallback(async () => {
-    setLoading(true);
-
     try {
+      // Tạo tham số mặc định cho API danh sách gồm phân trang và sắp xếp.
       const params: EmployeeSearchParams = {
         offset: currentPage * limit,
         limit,
@@ -107,16 +97,20 @@ export function useEmployeeList() {
         ord_end_date: ordEndDate,
       };
 
+      // Chỉ gửi tên nhân viên lên API khi người dùng đã nhập và submit điều kiện này.
       if (committedName) {
         params.employee_name = committedName;
       }
 
+      // Chỉ gửi phòng ban lên API khi người dùng đã chọn và submit điều kiện này.
       if (committedGroup) {
         params.department_id = Number(committedGroup);
       }
 
+      // Gọi API lấy danh sách nhân viên theo điều kiện hiện tại.
       const data = await getEmployees(params);
 
+      // API trả code 200 thì cập nhật danh sách, tổng số bản ghi và thông báo rỗng nếu có.
       if (data.code === 200) {
         setEmployees(data.employees || []);
         setTotalRecords(data.totalRecords || 0);
@@ -126,18 +120,19 @@ export function useEmployeeList() {
             : ''
         );
       } else {
+        // API trả code khác 200 thì xóa dữ liệu danh sách để tránh hiển thị dữ liệu cũ.
         setEmployees([]);
         setTotalRecords(0);
         setEmptyMessage('');
       }
     } catch {
+      // Lỗi gọi API cũng xóa dữ liệu danh sách và thông báo để màn hình không dùng state cũ.
       setEmployees([]);
       setTotalRecords(0);
       setEmptyMessage('');
-    } finally {
-      setLoading(false);
     }
   }, [
+    // fetch lại dữ liệu khi trang, điều kiện tìm kiếm hoặc thứ tự sắp xếp thay đổi.
     currentPage,
     committedName,
     committedGroup,
@@ -148,7 +143,9 @@ export function useEmployeeList() {
   ]);
 
   /**
-   * Lấy danh sách phòng ban để hiển thị ở combobox.
+   * Lấy danh sách phòng ban để hiển thị trong combobox tìm kiếm.
+   *
+   * @returns hoàn thành sau khi cập nhật state danh sách phòng ban.
    */
   const fetchDepartments = useCallback(async () => {
     try {
@@ -160,21 +157,21 @@ export function useEmployeeList() {
   }, []);
 
   /**
-   * Tải lại danh sách nhân viên khi điều kiện tìm kiếm hoặc phân trang thay đổi.
+   * Tải lại danh sách nhân viên khi điều kiện tìm kiếm, sắp xếp hoặc phân trang thay đổi.
    */
   useEffect(() => {
     fetchEmployees();
   }, [fetchEmployees]);
 
   /**
-   * Tải danh sách phòng ban một lần khi màn hình được mount.
+   * Tải danh sách phòng ban khi màn hình được mount.
    */
   useEffect(() => {
     fetchDepartments();
   }, [fetchDepartments]);
 
   /**
-   * Thực hiện tìm kiếm với các giá trị đã nhập.
+   * Thực hiện tìm kiếm với giá trị đang nhập trên form.
    */
   const handleSearch = handleSubmit((values) => {
     setCommittedName(values.employeeName.trim());
@@ -185,7 +182,7 @@ export function useEmployeeList() {
   /**
    * Thay đổi thứ tự sắp xếp theo cột được chọn.
    *
-   * @param field tên trường cần sắp xếp
+   * @param field Tên trường cần sắp xếp.
    */
   const handleSort = (field: string) => {
     setCurrentSortField(field as EmployeeListSortField);
@@ -204,8 +201,8 @@ export function useEmployeeList() {
   /**
    * Định dạng ngày theo dạng yyyy/MM/dd.
    *
-   * @param dateStr chuỗi ngày đầu vào
-   * @returns chuỗi ngày đã định dạng hoặc rỗng
+   * @param dateStr Chuỗi ngày đầu vào.
+   * @returns Chuỗi ngày đã định dạng hoặc chuỗi rỗng.
    */
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) {
@@ -221,10 +218,10 @@ export function useEmployeeList() {
   };
 
   /**
-   * Trả về icon sắp xếp tương ứng với từng cột.
+   * Lấy ký hiệu sắp xếp tương ứng với cột được truyền vào.
    *
-   * @param field tên trường cần lấy icon
-   * @returns ký hiệu sắp xếp của cột
+   * @param field Tên trường cần lấy ký hiệu sắp xếp.
+   * @returns Ký hiệu sắp xếp của cột.
    */
   const getSortIndicator = (field: string) => {
     const defaultIndicator = '▲▽';
@@ -246,9 +243,9 @@ export function useEmployeeList() {
   };
 
   /**
-   * Tính toán mảng số trang hiển thị cho phân trang.
+   * Tính toán danh sách trang hiển thị trong phân trang.
    *
-   * @returns mảng chứa số trang hoặc dấu ...
+   * @returns Mảng chứa số trang hoặc dấu ba chấm.
    */
   const paginationPages = useMemo(() => {
     if (totalPages <= 1) {
@@ -287,7 +284,7 @@ export function useEmployeeList() {
   }, [totalPages, currentPage]);
 
   /**
-   * Chuyển đến trang trước.
+   * Chuyển đến trang trước nếu không phải trang đầu tiên.
    */
   const handlePreviousPage = () => {
     if (currentPage > 0) {
@@ -296,7 +293,7 @@ export function useEmployeeList() {
   };
 
   /**
-   * Chuyển đến trang tiếp theo.
+   * Chuyển đến trang tiếp theo nếu không phải trang cuối cùng.
    */
   const handleNextPage = () => {
     if (currentPage < totalPages - 1) {
@@ -305,72 +302,50 @@ export function useEmployeeList() {
   };
 
   /**
-   * Điều hướng đến trang thêm mới nhân viên.
+   * Lưu trạng thái hiện tại của danh sách trước khi điều hướng sang màn hình khác.
    */
-  const handleAddNew = () => {
+  const saveCurrentListState = () => {
     saveEmployeeListState({
       employeeName: committedName,
       departmentId: committedGroup,
-      formEmployeeName: getValues('employeeName'),
-      formDepartmentId: getValues('departmentId'),
+      formEmployeeName: committedName,
+      formDepartmentId: committedGroup,
       currentPage,
       ordEmployeeName,
       ordCertificationName,
       ordEndDate,
       currentSortField,
     });
+  };
+
+  /**
+   * Lưu trạng thái danh sách và điều hướng đến màn hình thêm mới nhân viên.
+   */
+  const handleAddNew = () => {
+    saveCurrentListState();
     clearEmployeeAdd();
     clearEmployeeDetailId();
     router.push('/employees/adm004');
   };
 
   /**
-   * Chuyen sang man hinh chi tiet nhan vien ma khong de ID tren URL.
+   * Lưu ID nhân viên và điều hướng đến màn hình chi tiết nhân viên.
    *
-   * @param employeeId ID nhan vien can xem chi tiet
+   * @param employeeId ID nhân viên cần xem chi tiết.
    */
   const handleViewDetail = (employeeId: number) => {
+    saveCurrentListState();
     saveEmployeeDetailId(employeeId);
     router.push('/employees/adm003');
   };
 
-  useEffect(() => {
-    if (!isListStateReady) {
-      return;
-    }
-
-    saveEmployeeListState({
-      employeeName: committedName,
-      departmentId: committedGroup,
-      formEmployeeName,
-      formDepartmentId,
-      currentPage,
-      ordEmployeeName,
-      ordCertificationName,
-      ordEndDate,
-      currentSortField,
-    });
-  }, [
-    committedName,
-    committedGroup,
-    currentPage,
-    ordEmployeeName,
-    ordCertificationName,
-    ordEndDate,
-    currentSortField,
-    formEmployeeName,
-    formDepartmentId,
-    isListStateReady,
-  ]);
-
   /**
-   * Trả về toàn bộ dữ liệu và hàm cần thiết cho component danh sách nhân viên.
+   * Trả về toàn bộ dữ liệu và handler của màn hình danh sách nhân viên.
    */
   return {
     employees,
     totalRecords,
     emptyMessage,
-    loading,
     register,
     currentPage,
     setCurrentPage,

@@ -9,7 +9,6 @@ import { useEmployeeList } from '@/hooks/useADM002';
 export default function EmployeeList() {
   const {
     employees,
-    loading,
     emptyMessage,
     register,
     currentPage,
@@ -199,17 +198,7 @@ export default function EmployeeList() {
           </div>
 
           <div className="css-grid-table-body">
-            {loading ? (
-              <div
-                style={{
-                  gridColumn: '1 / -1',
-                  textAlign: 'center',
-                  padding: '20px',
-                }}
-              >
-                読み込み中...
-              </div>
-            ) : employees.length === 0 ? (
+            {employees.length === 0 ? (
               <div
                 style={{
                   gridColumn: '1 / -1',

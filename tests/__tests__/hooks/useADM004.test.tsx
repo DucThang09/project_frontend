@@ -11,14 +11,14 @@ import {
   saveEmployeeConfirmData,
   toEmployeeFormValues,
 } from '@/lib/storage/EmployeeInputForm';
-import { loadEmployeeDetailId } from '@/lib/storage/employee-detail';
+import {
+  clearEmployeeDetailId,
+  loadEmployeeDetailId,
+} from '@/lib/storage/employeeDetail';
 
 jest.mock('@/lib/api/department.api');
 jest.mock('@/lib/api/certification.api');
 jest.mock('@/lib/api/employee.api');
-jest.mock('@/lib/storage/employee-detail', () => ({
-  loadEmployeeDetailId: jest.fn().mockReturnValue(null),
-}));
 jest.mock('@/lib/storage/EmployeeInputForm', () => {
   const actual = jest.requireActual('@/lib/storage/EmployeeInputForm');
   return {
@@ -30,10 +30,13 @@ jest.mock('@/lib/storage/EmployeeInputForm', () => {
     saveEmployeeConfirmData: jest.fn(),
   };
 });
+jest.mock('@/lib/storage/employeeDetail', () => ({
+  clearEmployeeDetailId: jest.fn(),
+  loadEmployeeDetailId: jest.fn().mockReturnValue(null),
+}));
 
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
-  useSearchParams: jest.fn(),
 }));
 
 const mockPush = jest.fn();
@@ -42,17 +45,12 @@ describe('useADM004', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    const { useRouter, useSearchParams } = jest.requireMock('next/navigation') as {
+    const { useRouter } = jest.requireMock('next/navigation') as {
       useRouter: jest.Mock;
-      useSearchParams: jest.Mock;
     };
 
     useRouter.mockReturnValue({
       push: mockPush,
-    });
-
-    useSearchParams.mockReturnValue({
-      get: jest.fn().mockReturnValue(null),
     });
 
     (getDepartments as jest.Mock).mockResolvedValue([]);
@@ -123,13 +121,7 @@ describe('useADM004', () => {
   });
 
   it('loads detail data when opened in edit mode without restore flag', async () => {
-    const { useSearchParams } = jest.requireMock('next/navigation') as {
-      useSearchParams: jest.Mock;
-    };
-
-    useSearchParams.mockReturnValue({
-      get: jest.fn().mockReturnValue('1'),
-    });
+    (loadEmployeeDetailId as jest.Mock).mockReturnValue('1');
 
     const { result } = renderHook(() => useADM004());
 
@@ -141,6 +133,19 @@ describe('useADM004', () => {
     });
 
     expect(result.current.getValues().departmentId).toBe('2');
+  });
+
+  it('redirects to system error when hidden edit id is invalid', async () => {
+    (loadEmployeeDetailId as jest.Mock).mockReturnValue('abc');
+
+    renderHook(() => useADM004());
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith('/employees/system-error');
+    });
+
+    expect(clearEmployeeDetailId).toHaveBeenCalled();
+    expect(getEmployeeDetail).not.toHaveBeenCalled();
   });
 
   it('validates with backend, then saves confirm data and navigates on submit', async () => {
@@ -268,5 +273,31 @@ describe('useADM004', () => {
     expect(saveEmployeeConfirmData).not.toHaveBeenCalled();
     expect(mockPush).not.toHaveBeenCalledWith('/employees/adm005');
     expect(result.current.errorMessage).not.toBe('');
+  });
+
+  it('navigates back to detail screen in edit mode', async () => {
+    (loadEmployeeDetailId as jest.Mock).mockReturnValue('1');
+
+    const { result } = renderHook(() => useADM004());
+
+    await waitFor(() => {
+      expect(getEmployeeDetail).toHaveBeenCalledWith('1');
+    });
+
+    act(() => {
+      result.current.onBack();
+    });
+
+    expect(mockPush).toHaveBeenCalledWith('/employees/adm003');
+  });
+
+  it('navigates back to list screen in add mode', () => {
+    const { result } = renderHook(() => useADM004());
+
+    act(() => {
+      result.current.onBack();
+    });
+
+    expect(mockPush).toHaveBeenCalledWith('/employees/adm002');
   });
 });

@@ -8,15 +8,15 @@ export type EmployeeListSortField = 'employee_name' | 'certification_name' | 'en
 
 
 export interface EmployeeListState {
-  employeeName: string;       // Tên nhân viên đang lọc 
-  departmentId: string;       // ID phòng ban đang lọc 
-  formEmployeeName: string;   // Tên nhân viên trên form 
-  formDepartmentId: string;   // ID phòng ban trên form 
-  currentPage: number;        // Trang hiện tại
-  ordEmployeeName: SortOrder;       // Thứ tự sắp xếp theo tên nhân viên
-  ordCertificationName: SortOrder;  // Thứ tự sắp xếp theo tên chứng chỉ
-  ordEndDate: SortOrder;            // Thứ tự sắp xếp theo ngày hết hạn
-  currentSortField: EmployeeListSortField; // Trường đang được sắp xếp
+  employeeName: string;       
+  departmentId: string;      
+  formEmployeeName: string;   
+  formDepartmentId: string;   
+  currentPage: number;        
+  ordEmployeeName: SortOrder;       
+  ordCertificationName: SortOrder;  
+  ordEndDate: SortOrder;            
+  currentSortField: EmployeeListSortField; 
 }
 // Kiểm tra có đang chạy trên môi trường trình duyệt không
 function isBrowser() {

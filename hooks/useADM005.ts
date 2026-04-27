@@ -16,14 +16,27 @@ import type {
   EmployeeValidationRequest,
 } from '@/types/employee';
 
+/**
+ * Hook xử lý màn ADM005.
+ * Màn này hiển thị thông tin xác nhận trước khi thêm mới hoặc cập nhật nhân viên.
+ */
 export function useADM005() {
   const router = useRouter();
+
+  // Dữ liệu dùng để hiển thị lên màn hình xác nhận ADM005.
   const [data, setData] = useState<EmployeeConfirmData | null>(null);
+
+  // Dữ liệu đầy đủ dùng để gọi API thêm mới hoặc cập nhật nhân viên.
   const [employeeData, setEmployeeData] = useState<EmployeeAdd | null>(null);
+
+  // Trạng thái đang submit, dùng để chặn người dùng bấm OK nhiều lần liên tiếp.
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  /**
+   * Lấy dữ liệu đã lưu từ ADM004 để hiển thị ở màn xác nhận.
+   * Nếu không có dữ liệu thì người dùng không đi đúng luồng, quay lại ADM004.
+   */
   useEffect(() => {
-    // ADM005 chỉ hoạt động khi đã có dữ liệu lưu từ ADM004.
     const confirmData = loadEmployeeConfirmData();
     const employeeData = loadEmployeeAdd();
 
@@ -36,13 +49,19 @@ export function useADM005() {
     setEmployeeData(employeeData);
   }, [router]);
 
+  /**
+   * Xử lý khi bấm nút Back ở ADM005.
+   * Đánh dấu restore để ADM004 lấy lại dữ liệu người dùng đã nhập trước đó.
+   */
   const handleBack = () => {
-    // khi ấn back ở ADM005 restore lại dữ liệu đã nhập.
     setEmployeeAddRestore();
     router.push('/employees/adm004');
   };
 
-  // Dùng lại payload validate để gọi API add/update.
+  /**
+   * Chuyển dữ liệu form đã lưu sang payload gửi lên API add/update.
+   * Payload này dùng chung cấu trúc với request validate ở ADM004.
+   */
   const toValidationRequest = (
     employeeInfo: EmployeeAdd
   ): EmployeeValidationRequest => ({
@@ -62,6 +81,10 @@ export function useADM005() {
     score: employeeInfo.score,
   });
 
+  /**
+   * Xử lý khi bấm nút OK ở ADM005.
+   * Tùy theo mode mà gọi API thêm mới hoặc cập nhật nhân viên.
+   */
   const handleOk = async () => {
     // Chặn submit lặp hoặc submit khi thiếu dữ liệu confirm.
     if (!employeeData || isSubmitting) {
@@ -71,25 +94,29 @@ export function useADM005() {
     setIsSubmitting(true);
 
     try {
+      // Tạo payload từ dữ liệu đã lưu trong session.
       const payload = toValidationRequest(employeeData);
+
       // Có employeeId thì gọi update, ngược lại gọi add.
       const response =
         employeeData.mode === EMPLOYEE_MODE_EDIT && employeeData.employeeId
         ? await updateEmployee(employeeData.employeeId, payload)
         : await addEmployee(payload);
 
-      // Save lỗi thì chuyển sang màn hình system error.
+      // Nếu API trả lỗi nghiệp vụ thì chuyển sang màn system error.
       if (response.code !== 200) {
         router.push('/employees/system-error');
         return;
       }
 
-      // Save thành công thì xóa dữ liệu trong session và sang màn complete.
+      // Nếu lưu thành công thì xóa dữ liệu tạm và chuyển sang màn hoàn tất ADM006.
       clearEmployeeAdd();
       router.push(`/employees/adm006?mode=${employeeData.mode}`);
     } catch {
+      // Nếu gọi API bị lỗi ngoài dự kiến thì chuyển sang màn system error.
       router.push('/employees/system-error');
     } finally {
+      // Kết thúc trạng thái submit để mở lại nút OK nếu vẫn ở màn hiện tại.
       setIsSubmitting(false);
     }
   };

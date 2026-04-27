@@ -3,17 +3,7 @@
 import { useADM003 } from '@/hooks/useADM003';
 
 export default function EmployeeDetail() {
-  const { employeeDetail, loading, onEdit, onBack, formatDate } = useADM003();
-
-  if (loading) {
-    return (
-      <div className="row">
-        <div className="box-shadow" style={{ padding: '20px' }}>
-          読み込み中...
-        </div>
-      </div>
-    );
-  }
+  const { employeeDetail, onEdit, onBack, formatDate } = useADM003();
 
   if (!employeeDetail) {
     return null;

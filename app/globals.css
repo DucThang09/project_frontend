@@ -761,6 +761,16 @@ border-collapse: separate;
     transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
 }
 
+.form-control.edit-locked-field:disabled {
+    color: #9aa0a6;
+    -webkit-text-fill-color: #9aa0a6;
+    background-color: #f1f3f5;
+    border-color: #d5d8dc;
+    box-shadow: none;
+    cursor: not-allowed;
+    opacity: 1;
+}
+
 .glyphicon-calendar {
   background: url(/assets/images/ic_calendar.svg) no-repeat 0 0;
   width: 25px;

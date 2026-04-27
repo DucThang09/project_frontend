@@ -1,11 +1,11 @@
-import type { Department, DepartmentResponse } from '@/types/department';
+import type { DepartmentDTO, DepartmentResponse } from '@/types/department';
 import { apiClient } from './client';
 
 // Endpoint lấy danh sách phòng ban.
-const DEPARTMENT_ENDPOINT = '/user/departments';
+const DEPARTMENT_ENDPOINT = '/department';
 
 // Gọi API lấy danh sách phòng ban để hiển thị ở combobox.
-export async function getDepartments(): Promise<Department[]> {
+export async function getDepartments(): Promise<DepartmentDTO[]> {
   const { data } = await apiClient.get<DepartmentResponse>(DEPARTMENT_ENDPOINT);
 
   return data.departments ?? [];

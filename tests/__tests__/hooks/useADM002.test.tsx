@@ -6,20 +6,20 @@ import { EMPLOYEE_LIST_PAGE_SIZE } from '@/lib/constants/employee';
 import {
   loadEmployeeListState,
   saveEmployeeListState,
-} from '@/lib/storage/employee-list';
+} from '@/lib/storage/employeeList';
 import { clearEmployeeAdd } from '@/lib/storage/EmployeeInputForm';
 import {
   clearEmployeeDetailId,
   saveEmployeeDetailId,
-} from '@/lib/storage/employee-detail';
+} from '@/lib/storage/employeeDetail';
 
 jest.mock('@/lib/api/employee.api');
 jest.mock('@/lib/api/department.api');
-jest.mock('@/lib/storage/employee-list');
+jest.mock('@/lib/storage/employeeList');
 jest.mock('@/lib/storage/EmployeeInputForm', () => ({
   clearEmployeeAdd: jest.fn(),
 }));
-jest.mock('@/lib/storage/employee-detail', () => ({
+jest.mock('@/lib/storage/employeeDetail', () => ({
   clearEmployeeDetailId: jest.fn(),
   saveEmployeeDetailId: jest.fn(),
 }));
@@ -82,7 +82,7 @@ describe('useEmployeeList', () => {
     );
 
     expect(result.current.currentPage).toBe(1);
-    expect(saveEmployeeListState).toHaveBeenCalledWith(restoredListState);
+    expect(saveEmployeeListState).not.toHaveBeenCalled();
   });
 
   it('saves restored list state before navigating to add page', async () => {
@@ -114,6 +114,17 @@ describe('useEmployeeList', () => {
     });
 
     expect(saveEmployeeDetailId).toHaveBeenCalledWith(30);
+    expect(saveEmployeeListState).toHaveBeenCalledWith({
+      employeeName: '',
+      departmentId: '',
+      formEmployeeName: '',
+      formDepartmentId: '',
+      currentPage: 0,
+      ordEmployeeName: 'ASC',
+      ordCertificationName: 'ASC',
+      ordEndDate: 'ASC',
+      currentSortField: 'employee_name',
+    });
     expect(mockPush).toHaveBeenCalledWith('/employees/adm003');
   });
 

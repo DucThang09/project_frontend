@@ -57,8 +57,11 @@ export async function updateEmployee(
   payload: EmployeeValidationRequest
 ): Promise<EmployeeValidationApiResponse> {
   const { data } = await apiClient.put<EmployeeValidationApiResponse>(
-    `${EMPLOYEE_ENDPOINT}/${employeeId}`,
-    payload
+    EMPLOYEE_ENDPOINT,
+    {
+      ...payload,
+      employeeId,
+    }
   );
 
   return data;
