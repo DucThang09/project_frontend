@@ -1,5 +1,5 @@
 'use client';
-
+//Comment đầu file
 import { useRef } from 'react';
 import { Controller } from 'react-hook-form';
 import DatePicker from 'react-datepicker';
@@ -7,6 +7,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { useADM004 } from '@/hooks/useADM004';
 import { EMPLOYEE_MODE_EDIT } from '@/lib/constants/employee';
 
+//Comment đầu function
 export default function EmployeeInputForm() {
   const {
     departments,

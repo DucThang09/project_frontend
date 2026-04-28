@@ -1,7 +1,8 @@
 'use client';
-
+//Comment đầu file
 import { useADM003 } from '@/hooks/useADM003';
 
+//Comment đầu function
 export default function EmployeeDetail() {
   const { employeeDetail, onEdit, onDelete, onBack, formatDate } = useADM003();
 

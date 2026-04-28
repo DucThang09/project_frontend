@@ -1,8 +1,8 @@
 'use client';
-
+//Comment đầu file
 import { useRouter } from 'next/navigation';
 import { VALIDATION_MESSAGES } from '@/lib/constants/messages';
-
+//Comment đầu function
 export default function SystemError() {
   const router = useRouter();
 

@@ -1,10 +1,10 @@
 'use client';
-
+// Comment đầu file
 import React from 'react';
 import { useEmployeeList } from '@/hooks/useADM002';
 
 /**
- * 社員一覧画面。
+ * Comment function
  */
 export default function EmployeeList() {
   const {

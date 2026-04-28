@@ -1,7 +1,8 @@
 'use client';
-
+//Comment đầu file
 import { useADM005 } from '@/hooks/useADM005';
 
+//Comment đầu function
 export default function EmployeeConfirm() {
   const { data, isSubmitting, handleBack, handleOk } = useADM005();
 

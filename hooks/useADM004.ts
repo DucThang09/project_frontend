@@ -1,5 +1,5 @@
 'use client';
-
+//Comment đầu file
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -142,7 +142,7 @@ export function useADM004() {
 
       setErrorMessage(errors.join(' '));
     };
-
+    // Tải dữ liệu chi tiết nhân viên nếu là mode chỉnh sửa, hoặc khôi phục dữ liệu form(sửa lại để mapping với TKMH)
     const loadFormData = async () => {
       // Nếu quay lại từ ADM005 thì khôi phục dữ liệu form đã nhập trước đó.
       if (isBackFromConfirm && employeeInfo) {
@@ -304,7 +304,7 @@ export function useADM004() {
   /**
    * Validate dữ liệu form với backend, lưu dữ liệu confirm và chuyển sang ADM005.
    */
-  const onConfirm = handleSubmit(async (values) => {
+  const onConfirm = handleSubmit(async (values) => { //Bỏ onConfirm
     // Xóa lỗi cũ trước khi validate lại dữ liệu.
     clearErrors();
     setErrorMessage('');

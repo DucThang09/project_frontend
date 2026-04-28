@@ -1,5 +1,5 @@
 'use client';
-
+//Comment đầu file
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { deleteEmployee, getEmployeeDetail } from '@/lib/api/employee.api';
@@ -49,13 +49,13 @@ export function useADM003() {
         router.push('/employees/system-error');
         return;
       }
-
       try {
         // Gọi API lấy chi tiết nhân viên theo employeeId trên URL.
         const response = await getEmployeeDetail(employeeId);
 
         // API không thành công hoặc không trả về nhân viên thì chuyển sang màn system error.
         if (response.code !== 200 || !response.employee) {
+          //lây message lỗi từ API và lưu vào sessionStorage để màn hình system error hiển thị thông báo lỗi phù hợp.
           router.push('/employees/system-error');
           return;
         }
@@ -74,7 +74,7 @@ export function useADM003() {
   /**
    * Điều hướng sang màn hình chỉnh sửa ADM004 với employeeId hiện tại trên URL.
    */
-  const onEdit = () => {
+  const onEdit = () => { //onEdit chuyển thành handleEdit
     // Nếu chưa có dữ liệu chi tiết thì chuyển sang màn hình system error.
     if (!employeeDetail) {
       router.push('/employees/system-error');
@@ -105,6 +105,7 @@ export function useADM003() {
 
       // API không thành công hoặc không trả message thì chuyển sang system error.
       if (response.code !== 200 || !response.message?.code) {
+        //lây message lỗi từ API và lưu vào sessionStorage để màn hình system error hiển thị thông báo lỗi phù hợp.
         router.push('/employees/system-error');
         return;
       }

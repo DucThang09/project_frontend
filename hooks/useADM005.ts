@@ -1,5 +1,5 @@
 'use client';
-
+//Comment đầu file
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { addEmployee, updateEmployee } from '@/lib/api/employee.api';
@@ -37,6 +37,7 @@ export function useADM005() {
    * Nếu không có dữ liệu thì người dùng không đi đúng luồng, quay lại ADM004.
    */
   useEffect(() => {
+    //Kiểm tra ID nhân viên trên URL để xác định đây là thêm mới hay chỉnh sửa, từ đó lấy dữ liệu đã lưu tương ứng. (sửa lại để mapping với TKMH)
     const confirmData = loadEmployeeConfirmData();
     const employeeData = loadEmployeeAdd();
 
@@ -54,7 +55,7 @@ export function useADM005() {
    * Đánh dấu restore để ADM004 lấy lại dữ liệu người dùng đã nhập trước đó.
    */
   const handleBack = () => {
-    setEmployeeAddRestore();
+    setEmployeeAddRestore();//Đánh dấu restore để ADM004 lấy lại dữ liệu người dùng đã nhập trước đó.
     if (employeeData?.mode === EMPLOYEE_MODE_EDIT && employeeData.employeeId) {
       router.push(`/employees/adm004?employeeId=${employeeData.employeeId}`);
       return;
@@ -91,7 +92,7 @@ export function useADM005() {
    * Tùy theo mode mà gọi API thêm mới hoặc cập nhật nhân viên.
    */
   const handleOk = async () => {
-    // Chặn submit lặp hoặc submit khi thiếu dữ liệu confirm.
+    // Chặn submit lặp hoặc submit khi thiếu dữ liệu confirm.(Thừa, bỏ đi)
     if (!employeeData || isSubmitting) {
       return;
     }

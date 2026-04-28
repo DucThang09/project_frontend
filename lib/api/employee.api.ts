@@ -7,9 +7,9 @@ import type {
   EmployeeValidationRequest,
 } from '@/types/employee';
 import { apiClient } from './client';
-
+// API liên quan đến nhân viên, bao gồm lấy danh sách, lấy chi tiết, validate, thêm mới, cập nhật và xóa nhân viên.
 const EMPLOYEE_ENDPOINT = '/employee';
-
+// Hàm gọi API lấy danh sách nhân viên với các tham số tìm kiếm và phân trang.
 export async function getEmployees(
   params?: EmployeeSearchParams
 ): Promise<EmployeeListApiResponse> {
@@ -20,7 +20,7 @@ export async function getEmployees(
 
   return data;
 }
-
+// Hàm gọi API lấy chi tiết một nhân viên theo employeeId.
 export async function getEmployeeDetail(
   employeeId: string
 ): Promise<EmployeeDetailApiResponse> {
@@ -30,7 +30,7 @@ export async function getEmployeeDetail(
 
   return data;
 }
-
+// Hàm gọi API validate dữ liệu nhân viên trước khi thêm mới hoặc cập nhật.
 export async function validateEmployeeInput(
   payload: EmployeeValidationRequest
 ): Promise<EmployeeValidationApiResponse> {
@@ -41,7 +41,7 @@ export async function validateEmployeeInput(
 
   return data;
 }
-
+//Hàm gọi API thêm mới nhân viên với dữ liệu đã validate.
 export async function addEmployee(
   payload: EmployeeValidationRequest
 ): Promise<EmployeeValidationApiResponse> {
@@ -52,7 +52,7 @@ export async function addEmployee(
 
   return data;
 }
-
+// Hàm gọi API cập nhật nhân viên với employeeId và dữ liệu đã validate.
 export async function updateEmployee(
   employeeId: string,
   payload: EmployeeValidationRequest
@@ -67,7 +67,7 @@ export async function updateEmployee(
 
   return data;
 }
-
+// Hàm gọi API xóa nhân viên theo employeeId.
 export async function deleteEmployee(
   employeeId: string
 ): Promise<EmployeeDeleteApiResponse> {

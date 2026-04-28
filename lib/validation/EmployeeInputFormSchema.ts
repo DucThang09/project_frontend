@@ -1,3 +1,4 @@
+/** Schema validate cho form nhập liệu nhân viên */
 import { z } from 'zod';
 import { VALIDATION_LABELS } from '@/lib/constants/employee';
 import { formatValidationMessage } from '@/lib/constants/messages';
@@ -11,7 +12,7 @@ const employeeLoginIdSchema = z
     message: formatValidationMessage('ER001', VALIDATION_LABELS.employeeLoginId),
   })
   .max(50, {
-    message: formatValidationMessage('ER006', VALIDATION_LABELS.employeeLoginId, '50'),
+    message: formatValidationMessage('ER006', VALIDATION_LABELS.employeeLoginId, '50'),//50 đưa vào constant
   })
   .regex(/^[A-Za-z_][A-Za-z0-9_]*$/, {
     message: formatValidationMessage('ER019'),

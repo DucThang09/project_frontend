@@ -1,7 +1,8 @@
 'use client';
-
+//Comment đầu file
 import { useADM006 } from '@/hooks/useADM006';
 
+//Comment đầu function
 export default function EmployeeComplete() {
   const { message, onOk } = useADM006();
 

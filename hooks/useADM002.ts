@@ -1,12 +1,12 @@
 'use client';
-
+//Comment đầu file
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { getEmployees } from '@/lib/api/employee.api';
 import { EMPLOYEE_LIST_PAGE_SIZE } from '@/lib/constants/employee';
 import { getDepartments } from '@/lib/api/department.api';
-import { clearEmployeeAdd} from '@/lib/storage/EmployeeInputForm';
+import { clearEmployeeAdd } from '@/lib/storage/EmployeeInputForm';
 import {
   loadEmployeeListState,
   saveEmployeeListState,
@@ -31,51 +31,43 @@ export function useEmployeeList() {
     employeeName: string;
     departmentId: string;
   };
-
+  //Comment
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
   const [emptyMessage, setEmptyMessage] = useState('');
   const [committedName, setCommittedName] = useState(restoredListState?.employeeName ?? '');
   const [committedGroup, setCommittedGroup] = useState(restoredListState?.departmentId ?? '');
-  const [currentPage, setCurrentPage] = useState(restoredListState?.currentPage ?? 0);
-  const [ordEmployeeName, setOrdEmployeeName] = useState<SortOrder>(restoredListState?.ordEmployeeName ?? 'ASC');
-  const [ordCertificationName, setOrdCertificationName] = useState<SortOrder>(restoredListState?.ordCertificationName ?? 'ASC');
-  const [ordEndDate, setOrdEndDate] = useState<SortOrder>(restoredListState?.ordEndDate ?? 'ASC');
   const [currentSortField, setCurrentSortField] = useState<EmployeeListSortField>(restoredListState?.currentSortField ?? 'employee_name');
   const [departments, setDepartments] = useState<DepartmentDTO[]>([]);
-  const limit = EMPLOYEE_LIST_PAGE_SIZE;
-  const totalPages = Math.ceil(totalRecords / limit);
+
+  //Khởi tạo điều kiện search ban đầu
   const { register, handleSubmit, reset } = useForm<SearchFormValues>({
     defaultValues: {
       employeeName: restoredListState?.employeeName ?? '',
       departmentId: restoredListState?.departmentId ?? '',
     },
   });
+  //Comment
+  const [currentPage, setCurrentPage] = useState(restoredListState?.currentPage ?? 0);
+  const [ordEmployeeName, setOrdEmployeeName] = useState<SortOrder>(restoredListState?.ordEmployeeName ?? 'ASC');
+  const [ordCertificationName, setOrdCertificationName] = useState<SortOrder>(restoredListState?.ordCertificationName ?? 'ASC');
+  const [ordEndDate, setOrdEndDate] = useState<SortOrder>(restoredListState?.ordEndDate ?? 'ASC');
+  const limit = EMPLOYEE_LIST_PAGE_SIZE;
+  const totalPages = Math.ceil(totalRecords / limit);
 
   /**
-   * lấy điều kiện tìm kiếm từ storage khi quay lại ADM002.
-   */
-  useEffect(() => {
-    // nếu không có dữ liệu danh sách đã lưu trong session thì return.
-    if (!restoredListState) {
-      return;
-    }
-    //đưa lại giá trị tìm kiếm đã lưu vào form
-    reset({
-      employeeName: restoredListState.employeeName,
-      departmentId: restoredListState.departmentId,
-    });
-  }, [departments, reset, restoredListState]);
-
-  /**
-   * Đảo chiều thứ tự sắp xếp giữa tăng dần và giảm dần.
+   * Lấy danh sách phòng ban để hiển thị trong combobox tìm kiếm.
    *
-   * @param value Thứ tự sắp xếp hiện tại.
-   * @returns Thứ tự sắp xếp sau khi đảo chiều.
+   * @returns hoàn thành sau khi cập nhật state danh sách phòng ban.
    */
-  const toggleSortOrder = (value: SortOrder): SortOrder => (
-    value === 'ASC' ? 'DESC' : 'ASC'
-  );
+  const fetchDepartments = useCallback(async () => {
+    try {
+      const data = await getDepartments();
+      setDepartments(data);
+    } catch {
+      setDepartments([]);
+    }
+  }, []);
 
   /**
    * Lấy danh sách nhân viên theo điều kiện tìm kiếm, sắp xếp và phân trang.
@@ -139,20 +131,6 @@ export function useEmployeeList() {
   ]);
 
   /**
-   * Lấy danh sách phòng ban để hiển thị trong combobox tìm kiếm.
-   *
-   * @returns hoàn thành sau khi cập nhật state danh sách phòng ban.
-   */
-  const fetchDepartments = useCallback(async () => {
-    try {
-      const data = await getDepartments();
-      setDepartments(data);
-    } catch {
-      setDepartments([]);
-    }
-  }, []);
-
-  /**
    * Tải lại danh sách nhân viên khi điều kiện tìm kiếm, sắp xếp hoặc phân trang thay đổi.
    */
   useEffect(() => {
@@ -176,6 +154,18 @@ export function useEmployeeList() {
   });
 
   /**
+     * Đảo chiều thứ tự sắp xếp giữa tăng dần và giảm dần.
+     *
+     * @param value Thứ tự sắp xếp hiện tại.
+     * @returns Thứ tự sắp xếp sau khi đảo chiều.
+     */
+  const toggleSortOrder = (value: SortOrder): SortOrder => (
+    value === 'ASC' ? 'DESC' : 'ASC'
+  );
+
+
+
+  /**
    * Thay đổi thứ tự sắp xếp theo cột được chọn.
    *
    * @param field Tên trường cần sắp xếp.
@@ -193,32 +183,12 @@ export function useEmployeeList() {
 
     setCurrentPage(0);
   };
-
   /**
-   * Định dạng ngày theo dạng yyyy/MM/dd.
-   *
-   * @param dateStr Chuỗi ngày đầu vào.
-   * @returns Chuỗi ngày đã định dạng hoặc chuỗi rỗng.
-   */
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) {
-      return '';
-    }
-
-    const date = new Date(dateStr);
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-
-    return `${y}/${m}/${d}`;
-  };
-
-  /**
-   * Lấy ký hiệu sắp xếp tương ứng với cột được truyền vào.
-   *
-   * @param field Tên trường cần lấy ký hiệu sắp xếp.
-   * @returns Ký hiệu sắp xếp của cột.
-   */
+     * Lấy ký hiệu sắp xếp tương ứng với cột được truyền vào.
+     *
+     * @param field Tên trường cần lấy ký hiệu sắp xếp.
+     * @returns Ký hiệu sắp xếp của cột.
+     */
   const getSortIndicator = (field: string) => {
     const defaultIndicator = '▲▽';
     const descendingIndicator = '▼△';
@@ -247,20 +217,20 @@ export function useEmployeeList() {
     if (totalPages <= 1) {
       return [];
     }
-
+    // Nếu tổng số trang nhỏ hơn hoặc bằng 5 thì hiển thị tất cả các trang.
     const pages: (number | string)[] = [];
-
+    // Nếu tổng số trang lớn hơn 5 thì hiển thị trang đầu, trang cuối, 2 trang xung quanh trang hiện tại và dấu ba chấm nếu cần thiết.
     if (totalPages <= 5) {
       for (let i = 0; i < totalPages; i++) {
         pages.push(i);
       }
     } else {
       pages.push(0);
-
+      // Hiển thị dấu ba chấm nếu trang hiện tại cách trang đầu hơn 2 trang.
       if (currentPage > 2) {
         pages.push('...');
       }
-
+      // Hiển thị 2 trang xung quanh trang hiện tại, đảm bảo không vượt quá trang đầu và trang cuối.
       for (
         let i = Math.max(1, currentPage - 1);
         i <= Math.min(totalPages - 2, currentPage + 1);
@@ -268,14 +238,14 @@ export function useEmployeeList() {
       ) {
         pages.push(i);
       }
-
+      // Hiển thị dấu ba chấm nếu trang hiện tại cách trang cuối hơn 2 trang.
       if (currentPage < totalPages - 3) {
         pages.push('...');
       }
-
+      // Hiển thị trang cuối cùng.
       pages.push(totalPages - 1);
     }
-
+    
     return pages;
   }, [totalPages, currentPage]);
 
@@ -298,20 +268,22 @@ export function useEmployeeList() {
   };
 
   /**
-   * Lưu trạng thái hiện tại của danh sách trước khi điều hướng sang màn hình khác.
+   * Định dạng ngày theo dạng yyyy/MM/dd.
+   *
+   * @param dateStr Chuỗi ngày đầu vào.
+   * @returns Chuỗi ngày đã định dạng hoặc chuỗi rỗng.
    */
-  const saveCurrentListState = () => {
-    saveEmployeeListState({
-      employeeName: committedName,
-      departmentId: committedGroup,
-      formEmployeeName: committedName,
-      formDepartmentId: committedGroup,
-      currentPage,
-      ordEmployeeName,
-      ordCertificationName,
-      ordEndDate,
-      currentSortField,
-    });
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) {
+      return '';
+    }
+
+    const date = new Date(dateStr);
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+
+    return `${y}/${m}/${d}`;
   };
 
   /**
@@ -333,6 +305,37 @@ export function useEmployeeList() {
     router.push(`/employees/adm003?employeeId=${employeeId}`);
   };
 
+  /**
+   * lấy điều kiện tìm kiếm từ storage khi quay lại ADM002.
+   */
+  useEffect(() => {
+    // nếu không có dữ liệu danh sách đã lưu trong session thì return.
+    if (!restoredListState) {
+      return;
+    }
+    //đưa lại giá trị tìm kiếm đã lưu vào form
+    reset({
+      employeeName: restoredListState.employeeName,
+      departmentId: restoredListState.departmentId,
+    });
+  }, [departments, reset, restoredListState]);
+
+  /**
+     * Lưu trạng thái hiện tại của danh sách trước khi điều hướng sang màn hình khác.
+     */
+  const saveCurrentListState = () => {
+    saveEmployeeListState({
+      employeeName: committedName,
+      departmentId: committedGroup,
+      formEmployeeName: committedName,
+      formDepartmentId: committedGroup,
+      currentPage,
+      ordEmployeeName,
+      ordCertificationName,
+      ordEndDate,
+      currentSortField,
+    });
+  };
   /**
    * Trả về toàn bộ dữ liệu và handler của màn hình danh sách nhân viên.
    */
