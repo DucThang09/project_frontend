@@ -1,19 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { getEmployeeDetail } from '@/lib/api/employee.api';
-import {
-  clearEmployeeDetailId,
-  loadEmployeeDetailId,
-  saveEmployeeDetailId,
-} from '@/lib/storage/employeeDetail';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { deleteEmployee, getEmployeeDetail } from '@/lib/api/employee.api';
+import { VALIDATION_MESSAGES } from '@/lib/constants/messages';
 import type { EmployeeDetail } from '@/types/employee';
 
 /**
  * Định dạng ngày theo dạng yyyy/MM/dd để hiển thị trên màn hình chi tiết.
  *
- * @param value Chuỗi ngày dạng yyyy-MM-dd hoặc null.
+ * @param value Chuỗi ngày dạng yyyy-MM-dd, yyyy/MM/dd hoặc null.
  * @returns Chuỗi ngày đã định dạng hoặc chuỗi rỗng nếu dữ liệu không hợp lệ.
  */
 function formatDate(value: string | null): string {
@@ -21,7 +17,8 @@ function formatDate(value: string | null): string {
     return '';
   }
 
-  const [year, month, day] = value.split('-');
+  const separator = value.includes('/') ? '/' : '-';
+  const [year, month, day] = value.split(separator);
   if (!year || !month || !day) {
     return '';
   }
@@ -36,32 +33,29 @@ function formatDate(value: string | null): string {
  */
 export function useADM003() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [employeeDetail, setEmployeeDetail] = useState<EmployeeDetail | null>(
     null
   );
+  const employeeId = searchParams.get('employeeId');
 
   /**
-   * lấy thông tin chi tiết nhân viên trong session khi màn hình ADM003 được mở.
+   * Lấy thông tin chi tiết nhân viên theo employeeId trên URL khi màn hình ADM003 được mở.
    */
   useEffect(() => {
     const fetchEmployeeDetail = async () => {
-      // Lấy ID nhân viên đã được lưu ở ADM002 trước khi chuyển sang ADM003.
-      const employeeId = loadEmployeeDetailId();
-
-      // Nếu không có ID hoặc ID không phải dạng số thì chuyển sang màn hình system error.
+      // Nếu không có employeeId trên URL hoặc employeeId không phải dạng số thì chuyển sang màn hình system error.
       if (!employeeId || !/^\d+$/.test(employeeId)) {
-        clearEmployeeDetailId();
         router.push('/employees/system-error');
         return;
       }
 
       try {
-        // Gọi API lấy chi tiết nhân viên theo ID đã lưu trong sessionStorage.
+        // Gọi API lấy chi tiết nhân viên theo employeeId trên URL.
         const response = await getEmployeeDetail(employeeId);
 
-        // API không thành công hoặc không trả về nhân viên thì chuyên sang màn system error.
+        // API không thành công hoặc không trả về nhân viên thì chuyển sang màn system error.
         if (response.code !== 200 || !response.employee) {
-          clearEmployeeDetailId();
           router.push('/employees/system-error');
           return;
         }
@@ -69,17 +63,16 @@ export function useADM003() {
         // Lưu dữ liệu chi tiết để component hiển thị.
         setEmployeeDetail(response.employee);
       } catch {
-        // Lỗi gọi API thì xóa session đang lưu và chuyển sang màn hình system error.
-        clearEmployeeDetailId();
+        // Lỗi gọi API thì chuyển sang màn hình system error.
         router.push('/employees/system-error');
       }
     };
 
     fetchEmployeeDetail();
-  }, [router]);
+  }, [employeeId, router]);
 
   /**
-   * Lưu lại ID nhân viên hiện tại và điều hướng sang màn hình chỉnh sửa ADM004.
+   * Điều hướng sang màn hình chỉnh sửa ADM004 với employeeId hiện tại trên URL.
    */
   const onEdit = () => {
     // Nếu chưa có dữ liệu chi tiết thì chuyển sang màn hình system error.
@@ -88,18 +81,45 @@ export function useADM003() {
       return;
     }
 
-    // Lưu ID nhân viên hiện tại để màn ADM004 biết đang sửa nhân viên nào.
-    saveEmployeeDetailId(employeeDetail.employeeId);
-
-    // Điều hướng sang màn hình chỉnh sửa nhân viên.
-    router.push('/employees/adm004');
+    router.push(`/employees/adm004?employeeId=${employeeDetail.employeeId}`);
   };
 
   /**
-   * Xóa session chi tiết đang lưu và quay lại màn hình danh sách ADM002.
+   * Xác nhận và xóa nhân viên hiện tại.
+   */
+  const onDelete = async () => {
+    // Không có nhân viên nào để xóa thì chuyển sang màn hình system error.
+    if (!employeeDetail) {
+      router.push('/employees/system-error');
+      return;
+    }
+
+    // Hủy thao tác nếu người dùng không đồng ý xóa.
+    if (!window.confirm(VALIDATION_MESSAGES.MSG004)) {
+      return;
+    }
+
+    try {
+      // Gọi API xóa nhân viên theo ID đang hiển thị trên màn ADM003.
+      const response = await deleteEmployee(String(employeeDetail.employeeId));
+
+      // API không thành công hoặc không trả message thì chuyển sang system error.
+      if (response.code !== 200 || !response.message?.code) {
+        router.push('/employees/system-error');
+        return;
+      }
+
+      router.push(`/employees/adm006?message=${response.message.code}`);
+    } catch {
+      // Lỗi khi gọi API thì chuyển sang system error.
+      router.push('/employees/system-error');
+    }
+  };
+
+  /**
+   * Quay lại màn hình danh sách ADM002.
    */
   const onBack = () => {
-    clearEmployeeDetailId();
     router.push('/employees/adm002');
   };
 
@@ -109,6 +129,7 @@ export function useADM003() {
   return {
     employeeDetail,
     onEdit,
+    onDelete,
     onBack,
     formatDate,
   };

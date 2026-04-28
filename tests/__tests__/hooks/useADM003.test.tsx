@@ -1,23 +1,15 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { useADM003 } from '@/hooks/useADM003';
-import { getEmployeeDetail } from '@/lib/api/employee.api';
-import {
-  clearEmployeeDetailId,
-  loadEmployeeDetailId,
-  saveEmployeeDetailId,
-} from '@/lib/storage/employeeDetail';
+import { deleteEmployee, getEmployeeDetail } from '@/lib/api/employee.api';
 
 jest.mock('@/lib/api/employee.api');
-jest.mock('@/lib/storage/employeeDetail', () => ({
-  clearEmployeeDetailId: jest.fn(),
-  loadEmployeeDetailId: jest.fn(),
-  saveEmployeeDetailId: jest.fn(),
-}));
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
+  useSearchParams: jest.fn(),
 }));
 
 const mockPush = jest.fn();
+const mockSearchParamsGet = jest.fn();
 
 const employeeDetail = {
   employeeId: 30,
@@ -38,24 +30,29 @@ const employeeDetail = {
 
 describe('useADM003', () => {
   beforeEach(() => {
+    jest.restoreAllMocks();
     jest.clearAllMocks();
 
-    const { useRouter } = jest.requireMock('next/navigation') as {
+    const { useRouter, useSearchParams } = jest.requireMock('next/navigation') as {
       useRouter: jest.Mock;
+      useSearchParams: jest.Mock;
     };
 
     useRouter.mockReturnValue({
       push: mockPush,
     });
+    useSearchParams.mockReturnValue({
+      get: mockSearchParamsGet,
+    });
 
-    (loadEmployeeDetailId as jest.Mock).mockReturnValue('30');
+    mockSearchParamsGet.mockReturnValue('30');
     (getEmployeeDetail as jest.Mock).mockResolvedValue({
       code: 200,
       employee: employeeDetail,
     });
   });
 
-  it('loads employee detail by hidden id', async () => {
+  it('loads employee detail by router id', async () => {
     const { result } = renderHook(() => useADM003());
 
     await waitFor(() => {
@@ -66,8 +63,8 @@ describe('useADM003', () => {
     expect(mockPush).not.toHaveBeenCalledWith('/employees/system-error');
   });
 
-  it('redirects to system error when hidden id is missing', async () => {
-    (loadEmployeeDetailId as jest.Mock).mockReturnValue(null);
+  it('redirects to system error when router id is missing', async () => {
+    mockSearchParamsGet.mockReturnValue(null);
 
     renderHook(() => useADM003());
 
@@ -75,12 +72,11 @@ describe('useADM003', () => {
       expect(mockPush).toHaveBeenCalledWith('/employees/system-error');
     });
 
-    expect(clearEmployeeDetailId).toHaveBeenCalled();
     expect(getEmployeeDetail).not.toHaveBeenCalled();
   });
 
-  it('redirects to system error when hidden id is invalid', async () => {
-    (loadEmployeeDetailId as jest.Mock).mockReturnValue('abc');
+  it('redirects to system error when router id is invalid', async () => {
+    mockSearchParamsGet.mockReturnValue('abc');
 
     renderHook(() => useADM003());
 
@@ -88,7 +84,6 @@ describe('useADM003', () => {
       expect(mockPush).toHaveBeenCalledWith('/employees/system-error');
     });
 
-    expect(clearEmployeeDetailId).toHaveBeenCalled();
     expect(getEmployeeDetail).not.toHaveBeenCalled();
   });
 
@@ -104,7 +99,6 @@ describe('useADM003', () => {
       expect(mockPush).toHaveBeenCalledWith('/employees/system-error');
     });
 
-    expect(clearEmployeeDetailId).toHaveBeenCalled();
   });
 
   it('redirects to system error when detail API omits employee', async () => {
@@ -118,10 +112,9 @@ describe('useADM003', () => {
       expect(mockPush).toHaveBeenCalledWith('/employees/system-error');
     });
 
-    expect(clearEmployeeDetailId).toHaveBeenCalled();
   });
 
-  it('stores hidden employee id before navigating to edit page', async () => {
+  it('navigates to edit page with employee id', async () => {
     const { result } = renderHook(() => useADM003());
 
     await waitFor(() => {
@@ -132,8 +125,42 @@ describe('useADM003', () => {
       result.current.onEdit();
     });
 
-    expect(saveEmployeeDetailId).toHaveBeenCalledWith(30);
-    expect(mockPush).toHaveBeenCalledWith('/employees/adm004');
+    expect(mockPush).toHaveBeenCalledWith('/employees/adm004?employeeId=30');
+  });
+
+  it('deletes employee after confirm and navigates to complete page with API message', async () => {
+    jest.spyOn(window, 'confirm').mockReturnValue(true);
+    (deleteEmployee as jest.Mock).mockResolvedValue({
+      code: 200,
+      message: { code: 'MSG003', params: [] },
+    });
+    const { result } = renderHook(() => useADM003());
+
+    await waitFor(() => {
+      expect(result.current.employeeDetail).toEqual(employeeDetail);
+    });
+
+    await act(async () => {
+      await result.current.onDelete();
+    });
+
+    expect(deleteEmployee).toHaveBeenCalledWith('30');
+    expect(mockPush).toHaveBeenCalledWith('/employees/adm006?message=MSG003');
+  });
+
+  it('does not delete employee when confirm is canceled', async () => {
+    jest.spyOn(window, 'confirm').mockReturnValue(false);
+    const { result } = renderHook(() => useADM003());
+
+    await waitFor(() => {
+      expect(result.current.employeeDetail).toEqual(employeeDetail);
+    });
+
+    await act(async () => {
+      await result.current.onDelete();
+    });
+
+    expect(deleteEmployee).not.toHaveBeenCalled();
   });
 
 });

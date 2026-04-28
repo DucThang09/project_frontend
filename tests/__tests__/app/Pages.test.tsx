@@ -52,6 +52,11 @@ jest.mock('@/lib/api/employee.api', () => ({
     },
   }),
   validateEmployeeInput: jest.fn().mockResolvedValue({ code: 200 }),
+  deleteEmployee: jest.fn().mockResolvedValue({
+    code: 200,
+    employeeId: '30',
+    message: { code: 'MSG003', params: [] },
+  }),
 }));
 
 jest.mock('@/lib/storage/EmployeeInputForm', () => ({
@@ -81,15 +86,15 @@ jest.mock('@/lib/storage/EmployeeInputForm', () => ({
     departmentName: 'Development',
     employeeName: 'Test User',
     employeeNameKana: 'ﾃｽﾄ',
-    employeeBirthDate: '2000-01-01',
+    employeeBirthDate: '2000/01/01',
     employeeEmail: 'test@example.com',
     employeeTelephone: '0123456789',
     employeeLoginPassword: 'secret123',
     employeeLoginPasswordConfirm: 'secret123',
     certificationId: '1',
     certificationName: 'N1',
-    certificationStartDate: '2020-01-01',
-    certificationEndDate: '2022-01-01',
+    certificationStartDate: '2020/01/01',
+    certificationEndDate: '2022/01/01',
     score: '850',
   }),
   loadEmployeeConfirmData: jest.fn().mockReturnValue({
@@ -131,12 +136,6 @@ jest.mock('@/lib/storage/employeeList', () => ({
   loadEmployeeListState: jest.fn().mockReturnValue(null),
   saveEmployeeListState: jest.fn(),
   clearEmployeeListState: jest.fn(),
-}));
-
-jest.mock('@/lib/storage/employeeDetail', () => ({
-  loadEmployeeDetailId: jest.fn().mockReturnValue('30'),
-  saveEmployeeDetailId: jest.fn(),
-  clearEmployeeDetailId: jest.fn(),
 }));
 
 jest.mock('@/hooks/useAuth', () => ({

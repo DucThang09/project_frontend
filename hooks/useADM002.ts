@@ -8,10 +8,6 @@ import { EMPLOYEE_LIST_PAGE_SIZE } from '@/lib/constants/employee';
 import { getDepartments } from '@/lib/api/department.api';
 import { clearEmployeeAdd} from '@/lib/storage/EmployeeInputForm';
 import {
-  clearEmployeeDetailId,
-  saveEmployeeDetailId,
-} from '@/lib/storage/employeeDetail';
-import {
   loadEmployeeListState,
   saveEmployeeListState,
   type EmployeeListSortField,
@@ -324,19 +320,17 @@ export function useEmployeeList() {
   const handleAddNew = () => {
     saveCurrentListState();
     clearEmployeeAdd();
-    clearEmployeeDetailId();
     router.push('/employees/adm004');
   };
 
   /**
-   * Lưu ID nhân viên và điều hướng đến màn hình chi tiết nhân viên.
+   * lấy ID nhân viên và điều hướng đến màn hình chi tiết nhân viên.
    *
    * @param employeeId ID nhân viên cần xem chi tiết.
    */
   const handleViewDetail = (employeeId: number) => {
     saveCurrentListState();
-    saveEmployeeDetailId(employeeId);
-    router.push('/employees/adm003');
+    router.push(`/employees/adm003?employeeId=${employeeId}`);
   };
 
   /**

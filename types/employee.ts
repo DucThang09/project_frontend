@@ -105,6 +105,12 @@ export interface EmployeeValidationApiResponse {
   readonly message?: ApiMessage;
 }
 
+export interface EmployeeDeleteApiResponse {
+  readonly code: number;
+  readonly employeeId?: string;
+  readonly message?: ApiMessage;
+}
+
 // Du lieu tam luu cua man add truoc khi sang confirm.
 export type EmployeeMode = 'add' | 'edit';
 

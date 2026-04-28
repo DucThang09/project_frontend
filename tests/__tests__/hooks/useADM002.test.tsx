@@ -8,20 +8,12 @@ import {
   saveEmployeeListState,
 } from '@/lib/storage/employeeList';
 import { clearEmployeeAdd } from '@/lib/storage/EmployeeInputForm';
-import {
-  clearEmployeeDetailId,
-  saveEmployeeDetailId,
-} from '@/lib/storage/employeeDetail';
 
 jest.mock('@/lib/api/employee.api');
 jest.mock('@/lib/api/department.api');
 jest.mock('@/lib/storage/employeeList');
 jest.mock('@/lib/storage/EmployeeInputForm', () => ({
   clearEmployeeAdd: jest.fn(),
-}));
-jest.mock('@/lib/storage/employeeDetail', () => ({
-  clearEmployeeDetailId: jest.fn(),
-  saveEmployeeDetailId: jest.fn(),
 }));
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
@@ -98,11 +90,10 @@ describe('useEmployeeList', () => {
 
     expect(saveEmployeeListState).toHaveBeenLastCalledWith(restoredListState);
     expect(clearEmployeeAdd).toHaveBeenCalled();
-    expect(clearEmployeeDetailId).toHaveBeenCalled();
     expect(mockPush).toHaveBeenCalledWith('/employees/adm004');
   });
 
-  it('stores hidden employee id before navigating to detail page', async () => {
+  it('navigates to detail page with employee id', async () => {
     (loadEmployeeListState as jest.Mock).mockReturnValue(null);
 
     const { result } = renderHook(() => useEmployeeList());
@@ -113,7 +104,6 @@ describe('useEmployeeList', () => {
       result.current.handleViewDetail(30);
     });
 
-    expect(saveEmployeeDetailId).toHaveBeenCalledWith(30);
     expect(saveEmployeeListState).toHaveBeenCalledWith({
       employeeName: '',
       departmentId: '',
@@ -125,7 +115,7 @@ describe('useEmployeeList', () => {
       ordEndDate: 'ASC',
       currentSortField: 'employee_name',
     });
-    expect(mockPush).toHaveBeenCalledWith('/employees/adm003');
+    expect(mockPush).toHaveBeenCalledWith('/employees/adm003?employeeId=30');
   });
 
   it('sends updated sort params to API when sorting by employee name', async () => {

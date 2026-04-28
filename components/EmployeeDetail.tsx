@@ -3,7 +3,7 @@
 import { useADM003 } from '@/hooks/useADM003';
 
 export default function EmployeeDetail() {
-  const { employeeDetail, onEdit, onBack, formatDate } = useADM003();
+  const { employeeDetail, onEdit, onDelete, onBack, formatDate } = useADM003();
 
   if (!employeeDetail) {
     return null;
@@ -64,7 +64,7 @@ export default function EmployeeDetail() {
           <li className="form-group row d-flex">
             <div className="btn-group col-sm col-sm-10 ml">
               <button type="button" onClick={onEdit} className="btn btn-primary btn-sm">編集</button>
-              <button type="button" className="btn btn-secondary btn-sm">削除</button>
+              <button type="button" onClick={onDelete} className="btn btn-secondary btn-sm">削除</button>
               <button type="button" onClick={onBack} className="btn btn-secondary btn-sm">戻る</button>
             </div>
           </li>

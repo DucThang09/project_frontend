@@ -1,5 +1,6 @@
 import type {
   EmployeeDetailApiResponse,
+  EmployeeDeleteApiResponse,
   EmployeeListApiResponse,
   EmployeeSearchParams,
   EmployeeValidationApiResponse,
@@ -62,6 +63,17 @@ export async function updateEmployee(
       ...payload,
       employeeId,
     }
+  );
+
+  return data;
+}
+
+export async function deleteEmployee(
+  employeeId: string
+): Promise<EmployeeDeleteApiResponse> {
+  const { data } = await apiClient.delete<EmployeeDeleteApiResponse>(
+    EMPLOYEE_ENDPOINT,
+    { params: { employeeId } }
   );
 
   return data;

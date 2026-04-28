@@ -55,6 +55,11 @@ export function useADM005() {
    */
   const handleBack = () => {
     setEmployeeAddRestore();
+    if (employeeData?.mode === EMPLOYEE_MODE_EDIT && employeeData.employeeId) {
+      router.push(`/employees/adm004?employeeId=${employeeData.employeeId}`);
+      return;
+    }
+
     router.push('/employees/adm004');
   };
 

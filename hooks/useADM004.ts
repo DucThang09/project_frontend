@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { getCertifications } from '@/lib/api/certification.api';
 import { getDepartments } from '@/lib/api/department.api';
@@ -31,10 +31,6 @@ import {
   toEmployeeFormValues,
   toEmployeeFormValuesFromDetail,
 } from '@/lib/storage/EmployeeInputForm';
-import {
-  clearEmployeeDetailId,
-  loadEmployeeDetailId,
-} from '@/lib/storage/employeeDetail';
 import { createEmployeeInputFormSchema } from '@/lib/validation/EmployeeInputFormSchema';
 import type { CertificationDTO } from '@/types/certification';
 import type { DepartmentDTO } from '@/types/department';
@@ -92,10 +88,11 @@ export function createEmployeeEmpty(): EmployeeFormValues {
  */
 export function useADM004() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [departments, setDepartments] = useState<DepartmentDTO[]>([]);
   const [certifications, setCertifications] = useState<CertificationDTO[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
-  const employeeId = loadEmployeeDetailId();
+  const employeeId = searchParams.get('employeeId');
   const mode = employeeId ? EMPLOYEE_MODE_EDIT : EMPLOYEE_MODE_ADD;
 
   const form = useForm<EmployeeFormValues>({
@@ -119,7 +116,7 @@ export function useADM004() {
     const isBackFromConfirm = RestoreEmployeeAdd();
 
     const fetchMasterData = async () => {
-      // Tải đồng thời danh sách phòng ban và chứng chỉ để hiển thị trong combobox.
+      // lấy danh sách phòng ban và chứng chỉ để hiển thị trong combobox.
       const [departmentResult, certificationResult] = await Promise.allSettled([
         getDepartments(),
         getCertifications(),
@@ -166,7 +163,6 @@ export function useADM004() {
       if (mode === EMPLOYEE_MODE_EDIT && employeeId) {
         // ID sửa phải tồn tại trong sessionStorage và là dạng số.
         if (!/^\d+$/.test(employeeId)) {
-          clearEmployeeDetailId();
           router.push('/employees/system-error');
           return;
         }
@@ -177,7 +173,6 @@ export function useADM004() {
 
           // API lỗi hoặc không trả về nhân viên thì chuyển sang màn hình system error.
           if (response.code !== 200 || !response.employee) {
-            clearEmployeeDetailId();
             router.push('/employees/system-error');
             return;
           }
@@ -187,7 +182,6 @@ export function useADM004() {
           return;
         } catch {
           // Lỗi gọi API thì xóa ID đang lưu và chuyển sang màn hình system error.
-          clearEmployeeDetailId();
           router.push('/employees/system-error');
           return;
         }
@@ -345,7 +339,7 @@ export function useADM004() {
    */
   const onBack = () => {
     if (mode === EMPLOYEE_MODE_EDIT) {
-      router.push('/employees/adm003');
+      router.push(`/employees/adm003?employeeId=${employeeId}`);
       return;
     }
 
