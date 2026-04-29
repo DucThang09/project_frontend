@@ -1,14 +1,22 @@
 'use client';
-//Comment đầu file
+
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { addEmployee, updateEmployee } from '@/lib/api/employee.api';
-import { EMPLOYEE_MODE_EDIT } from '@/lib/constants/employee';
+import { useRouter, useSearchParams } from 'next/navigation';
+import {
+  addEmployee,
+  getEmployeeDetail,
+  updateEmployee,
+} from '@/lib/api/employee.api';
+import {
+  EMPLOYEE_MODE_ADD,
+  EMPLOYEE_MODE_EDIT,
+  HTTP_STATUS_OK,
+} from '@/lib/constants/employee';
 import {
   clearEmployeeAdd,
   loadEmployeeAdd,
-  loadEmployeeConfirmData,
   setEmployeeAddRestore,
+  toEmployeeConfirmData,
 } from '@/lib/storage/EmployeeInputForm';
 import type {
   EmployeeAdd,
@@ -17,57 +25,68 @@ import type {
 } from '@/types/employee';
 
 /**
- * Hook xử lý màn ADM005.
- * Màn này hiển thị thông tin xác nhận trước khi thêm mới hoặc cập nhật nhân viên.
+ * Hook xu ly man ADM005.
  */
 export function useADM005() {
   const router = useRouter();
-
-  // Dữ liệu dùng để hiển thị lên màn hình xác nhận ADM005.
+  const searchParams = useSearchParams();
   const [data, setData] = useState<EmployeeConfirmData | null>(null);
-
-  // Dữ liệu đầy đủ dùng để gọi API thêm mới hoặc cập nhật nhân viên.
   const [employeeData, setEmployeeData] = useState<EmployeeAdd | null>(null);
-
-  // Trạng thái đang submit, dùng để chặn người dùng bấm OK nhiều lần liên tiếp.
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  /**
-   * Lấy dữ liệu đã lưu từ ADM004 để hiển thị ở màn xác nhận.
-   * Nếu không có dữ liệu thì người dùng không đi đúng luồng, quay lại ADM004.
-   */
+  const employeeId = searchParams.get('employeeId') || '';
+  const mode = employeeId ? EMPLOYEE_MODE_EDIT : EMPLOYEE_MODE_ADD;
+
   useEffect(() => {
-    //Kiểm tra ID nhân viên trên URL để xác định đây là thêm mới hay chỉnh sửa, từ đó lấy dữ liệu đã lưu tương ứng. (sửa lại để mapping với TKMH)
-    const confirmData = loadEmployeeConfirmData();
-    const employeeData = loadEmployeeAdd();
+    // Hàm để binding dữ liệu từ session lên màn hình confirm.
+    const bindConfirmData = () => {
+      const employeeInfo = loadEmployeeAdd();
+      if (employeeInfo) {
+        const confirmData = toEmployeeConfirmData(employeeInfo);
+        setData(confirmData);
+        setEmployeeData(employeeInfo);
+      }
+    };
 
-    if (!confirmData || !employeeData) {
-      router.replace('/employees/adm004');
-      return;
-    }
+    const loadConfirmData = async () => {
+      //Kiểm tra nếu là mode edit thì gọi API lấy thông tin nhân viên
+      if (mode === EMPLOYEE_MODE_EDIT) {
+        try {
+          const response = await getEmployeeDetail(employeeId);
+          // Kiểm tra nếu API trả về lỗi hoặc không tồn tại thông tin nhân viên thì chuyển hướng đến trang system error.
+          if (response.code !== HTTP_STATUS_OK || !response.employee) {
+            router.push('/employees/system-error');
+            return;
+          } else {
+            // API thanh cong thi binding data tu MH edit len man hinh confirm.
+            bindConfirmData();
+            return;
+          }
+        } catch {
+          router.push('/employees/system-error');
+          return;
+        }
+      } else {
+        // Neu la mode add thi binding data tu session da luu o MH add len man hinh confirm.
+        bindConfirmData();
+        return;
+      }
+    };
 
-    setData(confirmData);
-    setEmployeeData(employeeData);
-  }, [router]);
+    loadConfirmData();
+  }, [employeeId, mode, router]);
 
-  /**
-   * Xử lý khi bấm nút Back ở ADM005.
-   * Đánh dấu restore để ADM004 lấy lại dữ liệu người dùng đã nhập trước đó.
-   */
   const handleBack = () => {
-    setEmployeeAddRestore();//Đánh dấu restore để ADM004 lấy lại dữ liệu người dùng đã nhập trước đó.
-    if (employeeData?.mode === EMPLOYEE_MODE_EDIT && employeeData.employeeId) {
-      router.push(`/employees/adm004?employeeId=${employeeData.employeeId}`);
+    setEmployeeAddRestore();
+
+    if (mode === EMPLOYEE_MODE_EDIT) {
+      router.push(`/employees/adm004?employeeId=${employeeId}`);
       return;
     }
 
     router.push('/employees/adm004');
   };
 
-  /**
-   * Chuyển dữ liệu form đã lưu sang payload gửi lên API add/update.
-   * Payload này dùng chung cấu trúc với request validate ở ADM004.
-   */
   const toValidationRequest = (
     employeeInfo: EmployeeAdd
   ): EmployeeValidationRequest => ({
@@ -87,12 +106,7 @@ export function useADM005() {
     score: employeeInfo.score,
   });
 
-  /**
-   * Xử lý khi bấm nút OK ở ADM005.
-   * Tùy theo mode mà gọi API thêm mới hoặc cập nhật nhân viên.
-   */
   const handleOk = async () => {
-    // Chặn submit lặp hoặc submit khi thiếu dữ liệu confirm.(Thừa, bỏ đi)
     if (!employeeData || isSubmitting) {
       return;
     }
@@ -100,29 +114,22 @@ export function useADM005() {
     setIsSubmitting(true);
 
     try {
-      // Tạo payload từ dữ liệu đã lưu trong session.
       const payload = toValidationRequest(employeeData);
-
-      // Có employeeId thì gọi update, ngược lại gọi add.
       const response =
-        employeeData.mode === EMPLOYEE_MODE_EDIT && employeeData.employeeId
-        ? await updateEmployee(employeeData.employeeId, payload)
-        : await addEmployee(payload);
+        mode === EMPLOYEE_MODE_EDIT && employeeId
+          ? await updateEmployee(employeeId, payload)
+          : await addEmployee(payload);
 
-      // Nếu API trả lỗi nghiệp vụ thì chuyển sang màn system error.
-      if (response.code !== 200) {
+      if (response.code !== HTTP_STATUS_OK) {
         router.push('/employees/system-error');
         return;
       }
 
-      // Nếu lưu thành công thì xóa dữ liệu tạm và chuyển sang màn hoàn tất ADM006.
       clearEmployeeAdd();
-      router.push(`/employees/adm006?mode=${employeeData.mode}`);
+      router.push(`/employees/adm006?mode=${mode}`);
     } catch {
-      // Nếu gọi API bị lỗi ngoài dự kiến thì chuyển sang màn system error.
       router.push('/employees/system-error');
     } finally {
-      // Kết thúc trạng thái submit để mở lại nút OK nếu vẫn ở màn hiện tại.
       setIsSubmitting(false);
     }
   };

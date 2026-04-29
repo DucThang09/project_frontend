@@ -3,27 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { deleteEmployee, getEmployeeDetail } from '@/lib/api/employee.api';
+import { HTTP_STATUS_OK } from '@/lib/constants/employee';
 import { VALIDATION_MESSAGES } from '@/lib/constants/messages';
 import type { EmployeeDetail } from '@/types/employee';
 
-/**
- * Định dạng ngày theo dạng yyyy/MM/dd để hiển thị trên màn hình chi tiết.
- *
- * @param value Chuỗi ngày dạng yyyy-MM-dd, yyyy/MM/dd hoặc null.
- * @returns Chuỗi ngày đã định dạng hoặc chuỗi rỗng nếu dữ liệu không hợp lệ.
- */
 function formatDate(value: string | null): string {
-  if (!value) {
-    return '';
-  }
-
-  const separator = value.includes('/') ? '/' : '-';
-  const [year, month, day] = value.split(separator);
-  if (!year || !month || !day) {
-    return '';
-  }
-
-  return `${year}/${month}/${day}`;
+  return value ? value.replaceAll('-', '/') : '';
 }
 
 /**
@@ -54,7 +39,7 @@ export function useADM003() {
         const response = await getEmployeeDetail(employeeId);
 
         // API không thành công hoặc không trả về nhân viên thì chuyển sang màn system error.
-        if (response.code !== 200 || !response.employee) {
+        if (response.code !== HTTP_STATUS_OK || !response.employee) {
           //lây message lỗi từ API và lưu vào sessionStorage để màn hình system error hiển thị thông báo lỗi phù hợp.
           router.push('/employees/system-error');
           return;
@@ -104,7 +89,7 @@ export function useADM003() {
       const response = await deleteEmployee(String(employeeDetail.employeeId));
 
       // API không thành công hoặc không trả message thì chuyển sang system error.
-      if (response.code !== 200 || !response.message?.code) {
+      if (response.code !== HTTP_STATUS_OK || !response.message?.code) {
         //lây message lỗi từ API và lưu vào sessionStorage để màn hình system error hiển thị thông báo lỗi phù hợp.
         router.push('/employees/system-error');
         return;

@@ -35,7 +35,7 @@ jest.mock('react-datepicker', () => {
 });
 
 describe('EmployeeInputForm', () => {
-  const mockOnConfirm = jest.fn();
+  const mockHandleConfirm = jest.fn();
   const mockOnBack = jest.fn();
   const mockSetValue = jest.fn();
   const mockClearErrors = jest.fn();
@@ -68,7 +68,6 @@ describe('EmployeeInputForm', () => {
       certifications: [
         { certificationId: 1, certificationName: 'N1' },
       ],
-      errorMessage: '',
       register: mockRegister,
       control: mockControl,
       setValue: mockSetValue,
@@ -78,34 +77,34 @@ describe('EmployeeInputForm', () => {
         errors: {},
       },
       mode: EMPLOYEE_MODE_ADD,
-      onConfirm: mockOnConfirm,
+      handleConfirm: mockHandleConfirm,
       onBack: mockOnBack,
     });
   });
 
-  it('calls onConfirm only when clicking the confirm button', () => {
+  it('calls handleConfirm only when clicking the confirm button', () => {
     render(<EmployeeInputForm />);
 
     fireEvent.click(screen.getByRole('button', { name: '確認' }));
 
-    expect(mockOnConfirm).toHaveBeenCalledTimes(1);
+    expect(mockHandleConfirm).toHaveBeenCalledTimes(1);
   });
 
-  it('does not call onConfirm when pressing Enter in a form input', () => {
+  it('does not call handleConfirm when pressing Enter in a form input', () => {
     render(<EmployeeInputForm />);
 
     fireEvent.keyDown(screen.getAllByRole('textbox')[0], { key: 'Enter', code: 'Enter' });
 
-    expect(mockOnConfirm).not.toHaveBeenCalled();
+    expect(mockHandleConfirm).not.toHaveBeenCalled();
   });
 
-  it('calls onBack without calling onConfirm when clicking the back button', () => {
+  it('calls onBack without calling handleConfirm when clicking the back button', () => {
     render(<EmployeeInputForm />);
 
     fireEvent.click(screen.getByRole('button', { name: '戻る' }));
 
     expect(mockOnBack).toHaveBeenCalledTimes(1);
-    expect(mockOnConfirm).not.toHaveBeenCalled();
+    expect(mockHandleConfirm).not.toHaveBeenCalled();
   });
 
   it('shows restored department and certification selections', () => {
@@ -157,7 +156,6 @@ describe('EmployeeInputForm', () => {
     (useADM004 as jest.Mock).mockReturnValue({
       departments: [],
       certifications: [],
-      errorMessage: '',
       register: mockRegister,
       control: mockControl,
       setValue: mockSetValue,
@@ -168,7 +166,7 @@ describe('EmployeeInputForm', () => {
         errors: {},
       },
       mode: EMPLOYEE_MODE_EDIT,
-      onConfirm: mockOnConfirm,
+      handleConfirm: mockHandleConfirm,
       onBack: mockOnBack,
     });
 

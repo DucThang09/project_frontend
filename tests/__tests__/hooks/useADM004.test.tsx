@@ -4,6 +4,10 @@ import { getCertifications } from '@/lib/api/certification.api';
 import { getDepartments } from '@/lib/api/department.api';
 import { getEmployeeDetail, validateEmployeeInput } from '@/lib/api/employee.api';
 import {
+  HTTP_STATUS_INTERNAL_SERVER_ERROR,
+  HTTP_STATUS_OK,
+} from '@/lib/constants/employee';
+import {
   clearEmployeeAddRestore,
   loadEmployeeAdd,
   RestoreEmployeeAdd,
@@ -52,9 +56,11 @@ describe('useADM004', () => {
 
     (getDepartments as jest.Mock).mockResolvedValue([]);
     (getCertifications as jest.Mock).mockResolvedValue([]);
-    (validateEmployeeInput as jest.Mock).mockResolvedValue({ code: 200 });
+    (validateEmployeeInput as jest.Mock).mockResolvedValue({
+      code: HTTP_STATUS_OK,
+    });
     (getEmployeeDetail as jest.Mock).mockResolvedValue({
-      code: 200,
+      code: HTTP_STATUS_OK,
       employee: {
         employeeId: 1,
         employeeLoginId: 'user01',
@@ -180,7 +186,7 @@ describe('useADM004', () => {
     });
 
     await act(async () => {
-      await result.current.onConfirm({
+      await result.current.handleConfirm({
         preventDefault: jest.fn(),
         persist: jest.fn(),
       } as unknown as React.BaseSyntheticEvent);
@@ -193,14 +199,14 @@ describe('useADM004', () => {
         departmentId: '2',
         employeeName: 'Test User',
         employeeNameKana: 'ﾃｽﾄ',
-        employeeBirthDate: '2000/01/01',
+        employeeBirthDate: '2000-01-01',
         employeeEmail: 'test@example.com',
         employeeTelephone: '0123456789',
         employeeLoginPassword: 'secret123',
         employeeLoginPasswordConfirm: 'secret123',
         certificationId: '1',
-        certificationStartDate: '2020/01/01',
-        certificationEndDate: '2022/01/01',
+        certificationStartDate: '2020-01-01',
+        certificationEndDate: '2022-01-01',
         score: '850',
       });
     });
@@ -222,12 +228,43 @@ describe('useADM004', () => {
     expect(mockPush).toHaveBeenCalledWith('/employees/adm005');
   });
 
+  it('navigates to ADM005 with employeeId when edit confirm succeeds', async () => {
+    mockSearchParamsGet.mockReturnValue('1');
+    (getDepartments as jest.Mock).mockResolvedValue([
+      { departmentId: 2, departmentName: 'Development' },
+    ]);
+    (getCertifications as jest.Mock).mockResolvedValue([
+      { certificationId: 1, certificationName: 'N1' },
+    ]);
+
+    const { result } = renderHook(() => useADM004());
+
+    await waitFor(() => {
+      expect(result.current.getValues().employeeLoginId).toBe('user01');
+    });
+
+    await act(async () => {
+      await result.current.handleConfirm({
+        preventDefault: jest.fn(),
+        persist: jest.fn(),
+      } as unknown as React.BaseSyntheticEvent);
+    });
+
+    await waitFor(() => {
+      expect(validateEmployeeInput).toHaveBeenCalled();
+    });
+
+    expect(saveEmployeeAdd).toHaveBeenCalledTimes(1);
+    expect(saveEmployeeConfirmData).toHaveBeenCalledTimes(1);
+    expect(mockPush).toHaveBeenCalledWith('/employees/adm005?employeeId=1');
+  });
+
   it('does not save or navigate when backend validation fails', async () => {
     (getDepartments as jest.Mock).mockResolvedValue([
       { departmentId: 2, departmentName: 'Development' },
     ]);
     (validateEmployeeInput as jest.Mock).mockResolvedValue({
-      code: 500,
+      code: HTTP_STATUS_INTERNAL_SERVER_ERROR,
       message: {
         code: 'ER003',
         params: ['アカウント名'],
@@ -255,7 +292,7 @@ describe('useADM004', () => {
     });
 
     await act(async () => {
-      await result.current.onConfirm({
+      await result.current.handleConfirm({
         preventDefault: jest.fn(),
         persist: jest.fn(),
       } as unknown as React.BaseSyntheticEvent);
@@ -268,7 +305,6 @@ describe('useADM004', () => {
     expect(saveEmployeeAdd).not.toHaveBeenCalled();
     expect(saveEmployeeConfirmData).not.toHaveBeenCalled();
     expect(mockPush).not.toHaveBeenCalledWith('/employees/adm005');
-    expect(result.current.errorMessage).not.toBe('');
   });
 
   it('navigates back to detail screen in edit mode', async () => {

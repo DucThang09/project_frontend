@@ -67,13 +67,17 @@ export const createEmployeeInputFormSchema = (isEditMode = false) => z.object({
   // Tên katakana bắt buộc, tối đa 125 ký tự và chỉ cho phép ký tự half-width katakana.
   employeeNameKana: z
     .string()
+    // Loại bỏ khoảng trắng đầu/cuối để tránh lỗi validate khi người dùng nhập toàn khoảng trắng hoặc có khoảng trắng thừa ở đầu/cuối.
     .trim()
+    // Kiểm tra không rỗng sau khi trim và tối đa 125 ký tự.
     .min(1, {
       message: formatValidationMessage('ER001', VALIDATION_LABELS.employeeNameKana),
     })
+    // Kiểm tra tối đa 125 ký tự sau khi trim.
     .max(125, {
       message: formatValidationMessage('ER006', VALIDATION_LABELS.employeeNameKana, '125'),
     })
+    // Kiểm tra chỉ chứa ký tự half-width katakana sau khi trim.
     .regex(/^[\uFF66-\uFF9D\uFF9E\uFF9F]+$/, {
       message: formatValidationMessage('ER009', VALIDATION_LABELS.employeeNameKana),
     }),

@@ -2,6 +2,8 @@
 export const EMPLOYEE_LIST_PAGE_SIZE = 20;
 export const EMPLOYEE_MODE_ADD = 'add';
 export const EMPLOYEE_MODE_EDIT = 'edit';
+export const HTTP_STATUS_OK = 200;
+export const HTTP_STATUS_INTERNAL_SERVER_ERROR = 500;
 export const VALIDATION_LABELS = {
   employeeLoginId: 'アカウント名',
   departmentId: 'グループ',

@@ -26,14 +26,17 @@ jest.mock('@/lib/api/certification.api', () => ({
   getCertifications: jest.fn().mockResolvedValue([]),
 }));
 
-jest.mock('@/lib/api/employee.api', () => ({
+jest.mock('@/lib/api/employee.api', () => {
+  const { HTTP_STATUS_OK } = jest.requireActual('@/lib/constants/employee');
+
+  return {
   getEmployees: jest.fn().mockResolvedValue({
-    code: 200,
+    code: HTTP_STATUS_OK,
     totalRecords: 0,
     employees: [],
   }),
   getEmployeeDetail: jest.fn().mockResolvedValue({
-    code: 200,
+    code: HTTP_STATUS_OK,
     employee: {
       employeeId: 30,
       employeeLoginId: 'user01',
@@ -51,13 +54,14 @@ jest.mock('@/lib/api/employee.api', () => ({
       score: 850,
     },
   }),
-  validateEmployeeInput: jest.fn().mockResolvedValue({ code: 200 }),
+  validateEmployeeInput: jest.fn().mockResolvedValue({ code: HTTP_STATUS_OK }),
   deleteEmployee: jest.fn().mockResolvedValue({
-    code: 200,
+    code: HTTP_STATUS_OK,
     employeeId: '30',
     message: { code: 'MSG003', params: [] },
   }),
-}));
+  };
+});
 
 jest.mock('@/lib/storage/EmployeeInputForm', () => ({
   clearEmployeeAdd: jest.fn(),
@@ -86,15 +90,15 @@ jest.mock('@/lib/storage/EmployeeInputForm', () => ({
     departmentName: 'Development',
     employeeName: 'Test User',
     employeeNameKana: 'ﾃｽﾄ',
-    employeeBirthDate: '2000/01/01',
+    employeeBirthDate: '2000-01-01',
     employeeEmail: 'test@example.com',
     employeeTelephone: '0123456789',
     employeeLoginPassword: 'secret123',
     employeeLoginPasswordConfirm: 'secret123',
     certificationId: '1',
     certificationName: 'N1',
-    certificationStartDate: '2020/01/01',
-    certificationEndDate: '2022/01/01',
+    certificationStartDate: '2020-01-01',
+    certificationEndDate: '2022-01-01',
     score: '850',
   }),
   loadEmployeeConfirmData: jest.fn().mockReturnValue({
@@ -102,12 +106,12 @@ jest.mock('@/lib/storage/EmployeeInputForm', () => ({
     departmentName: 'Development',
     employeeName: 'Test User',
     employeeNameKana: 'TEST USER',
-    employeeBirthDate: '2000/01/01',
+    employeeBirthDate: '2000-01-01',
     employeeEmail: 'test@example.com',
     employeeTelephone: '0123456789',
     certificationName: 'N1',
-    certificationStartDate: '2020/01/01',
-    certificationEndDate: '2022/01/01',
+    certificationStartDate: '2020-01-01',
+    certificationEndDate: '2022-01-01',
     score: '850',
   }),
   saveEmployeeAdd: jest.fn(),

@@ -19,7 +19,6 @@ export default function EmployeeList() {
     handleSearch,
     handleSort,
     getSortIndicator,
-    formatDate,
     handlePreviousPage,
     handleNextPage,
     handleAddNew,
@@ -228,12 +227,12 @@ export default function EmployeeList() {
                     </button>
                   </div>
                   <div>{employee.employeeName}</div>
-                  <div>{formatDate(employee.employeeBirthDate)}</div>
+                  <div>{employee.employeeBirthDate || ''}</div>
                   <div>{employee.departmentName || ''}</div>
                   <div>{employee.employeeEmail}</div>
                   <div>{employee.employeeTelephone || ''}</div>
                   <div>{employee.certificationName || ''}</div>
-                  <div>{formatDate(employee.endDate)}</div>
+                  <div>{employee.endDate || ''}</div>
                   <div>{employee.score != null ? employee.score : ''}</div>
                 </React.Fragment>
               ))

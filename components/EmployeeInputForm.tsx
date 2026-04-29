@@ -12,7 +12,6 @@ export default function EmployeeInputForm() {
   const {
     departments,
     certifications,
-    errorMessage,
     register,
     control,
     setValue,
@@ -21,7 +20,7 @@ export default function EmployeeInputForm() {
     watch,
     formState: { errors },
     mode,
-    onConfirm,
+    handleConfirm,
     onBack,
   } = useADM004();
 
@@ -80,11 +79,6 @@ export default function EmployeeInputForm() {
       <form className="c-form box-shadow">
         <ul>
           <li className="title">会員情報追加</li>
-          {errorMessage ? (
-            <li className="box-err">
-              <div className="box-err-content">{errorMessage}</div>
-            </li>
-          ) : null}
           <li className="form-group row d-flex">
             <label className="col-form-label col-sm-2"><i className="relative">アカウント名:<span className="note-red">*</span></i></label>
             <div className="col-sm col-sm-10">
@@ -337,7 +331,7 @@ export default function EmployeeInputForm() {
           </li>
           <li className="form-group row d-flex">
             <div className="btn-group col-sm col-sm-10 ml">
-              <button type="button" onClick={onConfirm} className="btn btn-primary btn-sm">確認</button>
+              <button type="button" onClick={handleConfirm} className="btn btn-primary btn-sm">確認</button>
               <button type="button" onClick={onBack} className="btn btn-secondary btn-sm">戻る</button>
             </div>
           </li>

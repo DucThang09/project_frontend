@@ -2,7 +2,10 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { useEmployeeList } from '@/hooks/useADM002';
 import { getEmployees } from '@/lib/api/employee.api';
 import { getDepartments } from '@/lib/api/department.api';
-import { EMPLOYEE_LIST_PAGE_SIZE } from '@/lib/constants/employee';
+import {
+  EMPLOYEE_LIST_PAGE_SIZE,
+  HTTP_STATUS_OK,
+} from '@/lib/constants/employee';
 import {
   loadEmployeeListState,
   saveEmployeeListState,
@@ -50,7 +53,7 @@ describe('useEmployeeList', () => {
     ]);
 
     (getEmployees as jest.Mock).mockResolvedValue({
-      code: 200,
+      code: HTTP_STATUS_OK,
       totalRecords: 40,
       employees: [],
     });

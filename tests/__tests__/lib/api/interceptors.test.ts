@@ -1,5 +1,6 @@
 // This file tests the logic of the interceptors directly using a mockable navigation function.
 
+import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '@/lib/constants/employee';
 
 describe('API Interceptor Logic', () => {
   // Mock localStorage
@@ -68,7 +69,9 @@ describe('API Interceptor Logic', () => {
     });
 
     it('should not navigate or clear token on other errors', async () => {
-        const error = { response: { status: 500 } };
+        const error = {
+          response: { status: HTTP_STATUS_INTERNAL_SERVER_ERROR },
+        };
         window.localStorage.setItem('access_token', 'test-token');
 
         await expect(responseInterceptorErrorLogic(error)).rejects.toEqual(error);

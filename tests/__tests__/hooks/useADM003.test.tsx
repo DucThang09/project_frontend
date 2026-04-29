@@ -1,6 +1,10 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { useADM003 } from '@/hooks/useADM003';
 import { deleteEmployee, getEmployeeDetail } from '@/lib/api/employee.api';
+import {
+  HTTP_STATUS_INTERNAL_SERVER_ERROR,
+  HTTP_STATUS_OK,
+} from '@/lib/constants/employee';
 
 jest.mock('@/lib/api/employee.api');
 jest.mock('next/navigation', () => ({
@@ -47,7 +51,7 @@ describe('useADM003', () => {
 
     mockSearchParamsGet.mockReturnValue('30');
     (getEmployeeDetail as jest.Mock).mockResolvedValue({
-      code: 200,
+      code: HTTP_STATUS_OK,
       employee: employeeDetail,
     });
   });
@@ -89,7 +93,7 @@ describe('useADM003', () => {
 
   it('redirects to system error when detail API returns an error code', async () => {
     (getEmployeeDetail as jest.Mock).mockResolvedValue({
-      code: 500,
+      code: HTTP_STATUS_INTERNAL_SERVER_ERROR,
       message: { code: 'ER023', params: [] },
     });
 
@@ -103,7 +107,7 @@ describe('useADM003', () => {
 
   it('redirects to system error when detail API omits employee', async () => {
     (getEmployeeDetail as jest.Mock).mockResolvedValue({
-      code: 200,
+      code: HTTP_STATUS_OK,
     });
 
     renderHook(() => useADM003());
@@ -131,7 +135,7 @@ describe('useADM003', () => {
   it('deletes employee after confirm and navigates to complete page with API message', async () => {
     jest.spyOn(window, 'confirm').mockReturnValue(true);
     (deleteEmployee as jest.Mock).mockResolvedValue({
-      code: 200,
+      code: HTTP_STATUS_OK,
       message: { code: 'MSG003', params: [] },
     });
     const { result } = renderHook(() => useADM003());

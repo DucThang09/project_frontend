@@ -4,7 +4,10 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { getEmployees } from '@/lib/api/employee.api';
-import { EMPLOYEE_LIST_PAGE_SIZE } from '@/lib/constants/employee';
+import {
+  EMPLOYEE_LIST_PAGE_SIZE,
+  HTTP_STATUS_OK,
+} from '@/lib/constants/employee';
 import { getDepartments } from '@/lib/api/department.api';
 import { clearEmployeeAdd } from '@/lib/storage/EmployeeInputForm';
 import {
@@ -98,8 +101,8 @@ export function useEmployeeList() {
       // Gọi API lấy danh sách nhân viên theo điều kiện hiện tại.
       const data = await getEmployees(params);
 
-      // API trả code 200 thì cập nhật danh sách, tổng số bản ghi và thông báo rỗng nếu có.
-      if (data.code === 200) {
+      // API trả code thành công thì cập nhật danh sách, tổng số bản ghi và thông báo rỗng nếu có.
+      if (data.code === HTTP_STATUS_OK) {
         setEmployees(data.employees || []);
         setTotalRecords(data.totalRecords || 0);
         setEmptyMessage(
@@ -108,7 +111,7 @@ export function useEmployeeList() {
             : ''
         );
       } else {
-        // API trả code khác 200 thì xóa dữ liệu danh sách để tránh hiển thị dữ liệu cũ.
+        // API trả code lỗi thì xóa dữ liệu danh sách để tránh hiển thị dữ liệu cũ.
         setEmployees([]);
         setTotalRecords(0);
         setEmptyMessage('');
@@ -268,30 +271,10 @@ export function useEmployeeList() {
   };
 
   /**
-   * Định dạng ngày theo dạng yyyy/MM/dd.
-   *
-   * @param dateStr Chuỗi ngày đầu vào.
-   * @returns Chuỗi ngày đã định dạng hoặc chuỗi rỗng.
-   */
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) {
-      return '';
-    }
-
-    const date = new Date(dateStr);
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-
-    return `${y}/${m}/${d}`;
-  };
-
-  /**
    * Lưu trạng thái danh sách và điều hướng đến màn hình thêm mới nhân viên.
    */
   const handleAddNew = () => {
     saveCurrentListState();
-    clearEmployeeAdd();
     router.push('/employees/adm004');
   };
 
@@ -352,7 +335,6 @@ export function useEmployeeList() {
     handleSearch,
     handleSort,
     getSortIndicator,
-    formatDate,
     handlePreviousPage,
     handleNextPage,
     handleAddNew,
