@@ -9,8 +9,8 @@ import {
   HTTP_STATUS_OK,
 } from '@/lib/constants/employee';
 import { getDepartments } from '@/lib/api/department.api';
-import { clearEmployeeAdd } from '@/lib/storage/EmployeeInputForm';
 import {
+  clearEmployeeListState,
   loadEmployeeListState,
   saveEmployeeListState,
   type EmployeeListSortField,
@@ -29,7 +29,7 @@ import type {
  */
 export function useEmployeeList() {
   const router = useRouter();
-  const restoredListState = useMemo(() => loadEmployeeListState(), []);
+  const [restoredListState] = useState(() => loadEmployeeListState());
   type SearchFormValues = {
     employeeName: string;
     departmentId: string;
@@ -38,25 +38,53 @@ export function useEmployeeList() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
   const [emptyMessage, setEmptyMessage] = useState('');
+  const [departmentErrorMessage, setDepartmentErrorMessage] = useState('');
   const [committedName, setCommittedName] = useState(restoredListState?.employeeName ?? '');
   const [committedGroup, setCommittedGroup] = useState(restoredListState?.departmentId ?? '');
-  const [currentSortField, setCurrentSortField] = useState<EmployeeListSortField>(restoredListState?.currentSortField ?? 'employee_name');
-  const [departments, setDepartments] = useState<DepartmentDTO[]>([]);
-
-  //Khởi tạo điều kiện search ban đầu
-  const { register, handleSubmit, reset } = useForm<SearchFormValues>({
-    defaultValues: {
-      employeeName: restoredListState?.employeeName ?? '',
-      departmentId: restoredListState?.departmentId ?? '',
-    },
-  });
-  //Comment
-  const [currentPage, setCurrentPage] = useState(restoredListState?.currentPage ?? 0);
+  const [currentPage, setCurrentPage] = useState(restoredListState?.currentPage ?? 1);
   const [ordEmployeeName, setOrdEmployeeName] = useState<SortOrder>(restoredListState?.ordEmployeeName ?? 'ASC');
   const [ordCertificationName, setOrdCertificationName] = useState<SortOrder>(restoredListState?.ordCertificationName ?? 'ASC');
   const [ordEndDate, setOrdEndDate] = useState<SortOrder>(restoredListState?.ordEndDate ?? 'ASC');
   const limit = EMPLOYEE_LIST_PAGE_SIZE;
+  const [currentSortField, setCurrentSortField] = useState<EmployeeListSortField>(restoredListState?.currentSortField ?? 'employee_name');
+  const [departments, setDepartments] = useState<DepartmentDTO[]>([]);
+
+  //Khởi tạo điều kiện search ban đầu
+  const { register, handleSubmit } = useForm<SearchFormValues>({
+    defaultValues: {
+      employeeName: restoredListState?.formEmployeeName ?? restoredListState?.employeeName ?? '',
+      departmentId: restoredListState?.formDepartmentId ?? restoredListState?.departmentId ?? '',
+    },
+  });
+  //Tính toán tổng số trang dựa trên tổng số bản ghi và số bản ghi trên mỗi trang.
   const totalPages = Math.ceil(totalRecords / limit);
+
+  const buildEmployeeSearchParams = useCallback((conditions: {
+    page: number;
+    employeeName: string;
+    departmentId: string;
+    ordEmployeeName: SortOrder;
+    ordCertificationName: SortOrder;
+    ordEndDate: SortOrder;
+  }): EmployeeSearchParams => {
+    const params: EmployeeSearchParams = {
+      offset: (conditions.page - 1) * limit,
+      limit,
+      ord_employee_name: conditions.ordEmployeeName,
+      ord_certification_name: conditions.ordCertificationName,
+      ord_end_date: conditions.ordEndDate,
+    };
+
+    if (conditions.employeeName) {
+      params.employee_name = conditions.employeeName;
+    }
+
+    if (conditions.departmentId) {
+      params.department_id = Number(conditions.departmentId);
+    }
+
+    return params;
+  }, [limit]);
 
   /**
    * Lấy danh sách phòng ban để hiển thị trong combobox tìm kiếm.
@@ -67,8 +95,10 @@ export function useEmployeeList() {
     try {
       const data = await getDepartments();
       setDepartments(data);
+      setDepartmentErrorMessage('');
     } catch {
       setDepartments([]);
+      setDepartmentErrorMessage('部門を取得できません');
     }
   }, []);
 
@@ -78,35 +108,31 @@ export function useEmployeeList() {
    * @returns  hoàn thành sau khi cập nhật state danh sách nhân viên.
    */
   const fetchEmployees = useCallback(async () => {
+    setEmployees([]);
+    setTotalRecords(0);
+    setEmptyMessage('');
+
     try {
       // Tạo tham số mặc định cho API danh sách gồm phân trang và sắp xếp.
-      const params: EmployeeSearchParams = {
-        offset: currentPage * limit,
-        limit,
-        ord_employee_name: ordEmployeeName,
-        ord_certification_name: ordCertificationName,
-        ord_end_date: ordEndDate,
-      };
-
-      // Chỉ gửi tên nhân viên lên API khi người dùng đã nhập và submit điều kiện này.
-      if (committedName) {
-        params.employee_name = committedName;
-      }
-
-      // Chỉ gửi phòng ban lên API khi người dùng đã chọn và submit điều kiện này.
-      if (committedGroup) {
-        params.department_id = Number(committedGroup);
-      }
+      const params = buildEmployeeSearchParams({
+        page: currentPage,
+        employeeName: committedName,
+        departmentId: committedGroup,
+        ordEmployeeName,
+        ordCertificationName,
+        ordEndDate,
+      });
 
       // Gọi API lấy danh sách nhân viên theo điều kiện hiện tại.
       const data = await getEmployees(params);
 
       // API trả code thành công thì cập nhật danh sách, tổng số bản ghi và thông báo rỗng nếu có.
       if (data.code === HTTP_STATUS_OK) {
-        setEmployees(data.employees || []);
+        const nextEmployees = data.employees || [];
+        setEmployees(nextEmployees);
         setTotalRecords(data.totalRecords || 0);
         setEmptyMessage(
-          data.message?.code === 'MSG005'
+          nextEmployees.length === 0 || data.message?.code === 'MSG005'
             ? '検索条件に該当するユーザが見つかりません。'
             : ''
         );
@@ -114,20 +140,20 @@ export function useEmployeeList() {
         // API trả code lỗi thì xóa dữ liệu danh sách để tránh hiển thị dữ liệu cũ.
         setEmployees([]);
         setTotalRecords(0);
-        setEmptyMessage('');
+        setEmptyMessage('従業員を取得できません');
       }
     } catch {
       // Lỗi gọi API cũng xóa dữ liệu danh sách và thông báo để màn hình không dùng state cũ.
       setEmployees([]);
       setTotalRecords(0);
-      setEmptyMessage('');
+      setEmptyMessage('従業員を取得できません');
     }
   }, [
     // fetch lại dữ liệu khi trang, điều kiện tìm kiếm hoặc thứ tự sắp xếp thay đổi.
     currentPage,
     committedName,
     committedGroup,
-    limit,
+    buildEmployeeSearchParams,
     ordEmployeeName,
     ordCertificationName,
     ordEndDate,
@@ -148,12 +174,21 @@ export function useEmployeeList() {
   }, [fetchDepartments]);
 
   /**
+   * Xóa trạng thái đã khôi phục để lần mở ADM002 tiếp theo không dùng lại session cũ.
+   */
+  useEffect(() => {
+    if (restoredListState) {
+      clearEmployeeListState();
+    }
+  }, [restoredListState]);
+
+  /**
    * Thực hiện tìm kiếm với giá trị đang nhập trên form.
    */
   const handleSearch = handleSubmit((values) => {
     setCommittedName(values.employeeName.trim());
     setCommittedGroup(values.departmentId);
-    setCurrentPage(0);
+    setCurrentPage(1);
   });
 
   /**
@@ -184,7 +219,7 @@ export function useEmployeeList() {
       setOrdEndDate((prev) => toggleSortOrder(prev));
     }
 
-    setCurrentPage(0);
+    setCurrentPage(1);
   };
   /**
      * Lấy ký hiệu sắp xếp tương ứng với cột được truyền vào.
@@ -224,31 +259,31 @@ export function useEmployeeList() {
     const pages: (number | string)[] = [];
     // Nếu tổng số trang lớn hơn 5 thì hiển thị trang đầu, trang cuối, 2 trang xung quanh trang hiện tại và dấu ba chấm nếu cần thiết.
     if (totalPages <= 5) {
-      for (let i = 0; i < totalPages; i++) {
+      for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
       }
     } else {
-      pages.push(0);
+      pages.push(1);
       // Hiển thị dấu ba chấm nếu trang hiện tại cách trang đầu hơn 2 trang.
-      if (currentPage > 2) {
+      if (currentPage > 3) {
         pages.push('...');
       }
       // Hiển thị 2 trang xung quanh trang hiện tại, đảm bảo không vượt quá trang đầu và trang cuối.
       for (
-        let i = Math.max(1, currentPage - 1);
-        i <= Math.min(totalPages - 2, currentPage + 1);
+        let i = Math.max(2, currentPage - 1);
+        i <= Math.min(totalPages - 1, currentPage + 1);
         i++
       ) {
         pages.push(i);
       }
       // Hiển thị dấu ba chấm nếu trang hiện tại cách trang cuối hơn 2 trang.
-      if (currentPage < totalPages - 3) {
+      if (currentPage < totalPages - 2) {
         pages.push('...');
       }
       // Hiển thị trang cuối cùng.
-      pages.push(totalPages - 1);
+      pages.push(totalPages);
     }
-    
+
     return pages;
   }, [totalPages, currentPage]);
 
@@ -256,7 +291,7 @@ export function useEmployeeList() {
    * Chuyển đến trang trước nếu không phải trang đầu tiên.
    */
   const handlePreviousPage = () => {
-    if (currentPage > 0) {
+    if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
     }
   };
@@ -265,7 +300,7 @@ export function useEmployeeList() {
    * Chuyển đến trang tiếp theo nếu không phải trang cuối cùng.
    */
   const handleNextPage = () => {
-    if (currentPage < totalPages - 1) {
+    if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
     }
   };
@@ -287,21 +322,6 @@ export function useEmployeeList() {
     saveCurrentListState();
     router.push(`/employees/adm003?employeeId=${employeeId}`);
   };
-
-  /**
-   * lấy điều kiện tìm kiếm từ storage khi quay lại ADM002.
-   */
-  useEffect(() => {
-    // nếu không có dữ liệu danh sách đã lưu trong session thì return.
-    if (!restoredListState) {
-      return;
-    }
-    //đưa lại giá trị tìm kiếm đã lưu vào form
-    reset({
-      employeeName: restoredListState.employeeName,
-      departmentId: restoredListState.departmentId,
-    });
-  }, [departments, reset, restoredListState]);
 
   /**
      * Lưu trạng thái hiện tại của danh sách trước khi điều hướng sang màn hình khác.
@@ -326,6 +346,7 @@ export function useEmployeeList() {
     employees,
     totalRecords,
     emptyMessage,
+    departmentErrorMessage,
     register,
     currentPage,
     setCurrentPage,

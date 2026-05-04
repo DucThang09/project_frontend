@@ -134,6 +134,24 @@ export function formatDisplayDate(value: string | null): string {
   return value.replaceAll('-', '/');
 }
 
+export function isEmployeeAddSessionForRoute(
+  data: EmployeeAdd | null,
+  mode: EmployeeMode,
+  employeeId: string | null
+): data is EmployeeAdd {
+  if (!data || data.mode !== mode) {
+    return false;
+  }
+
+  const routeEmployeeId = employeeId ?? '';
+
+  if (mode === 'add') {
+    return data.employeeId === '';
+  }
+
+  return /^\d+$/.test(routeEmployeeId) && data.employeeId === routeEmployeeId;
+}
+
 // Lưu dữ liệu nhập của màn add vào sessionStorage.
 export function dataEmployeeAdd(data: EmployeeAdd): void {
   if (!isBrowser()) {

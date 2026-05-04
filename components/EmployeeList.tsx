@@ -10,6 +10,7 @@ export default function EmployeeList() {
   const {
     employees,
     emptyMessage,
+    departmentErrorMessage,
     register,
     currentPage,
     setCurrentPage,
@@ -33,9 +34,9 @@ export default function EmployeeList() {
     return (
       <div className="pagin">
         <button
-          className={`btn btn-sm btn-pre btn-falcon-default ${currentPage === 0 ? 'btn-disabled' : ''}`}
+          className={`btn btn-sm btn-pre btn-falcon-default ${currentPage === 1 ? 'btn-disabled' : ''}`}
           onClick={handlePreviousPage}
-          disabled={currentPage === 0}
+          disabled={currentPage === 1}
         >
           <svg
             className="svg-inline--fa fa-chevron-left fa-w-10"
@@ -76,15 +77,15 @@ export default function EmployeeList() {
               className={`btn btn-sm text-primary btn-falcon-default ${currentPage === page ? 'active' : ''}`}
               onClick={() => setCurrentPage(page as number)}
             >
-              {(page as number) + 1}
+              {page as number}
             </button>
           )
         )}
 
         <button
-          className={`btn btn-sm btn-next btn-falcon-default ${currentPage === totalPages - 1 ? 'btn-disabled' : ''}`}
+          className={`btn btn-sm btn-next btn-falcon-default ${currentPage === totalPages ? 'btn-disabled' : ''}`}
           onClick={handleNextPage}
-          disabled={currentPage === totalPages - 1}
+          disabled={currentPage === totalPages}
         >
           <svg
             className="svg-inline--fa fa-chevron-right fa-w-10"
@@ -137,6 +138,9 @@ export default function EmployeeList() {
                     </option>
                   ))}
                 </select>
+                {departmentErrorMessage && (
+                  <div className="field-error-message">{departmentErrorMessage}</div>
+                )}
               </div>
             </li>
 
@@ -163,6 +167,17 @@ export default function EmployeeList() {
       </div>
 
       <div className="row row-table">
+        {emptyMessage && (
+          <div
+            style={{
+              width: '100%',
+              textAlign: 'center',
+              padding: '12px 20px',
+            }}
+          >
+            {emptyMessage}
+          </div>
+        )}
         <div className="css-grid-table box-shadow">
           <div className="css-grid-table-header">
             <div>ID</div>
@@ -197,46 +212,34 @@ export default function EmployeeList() {
           </div>
 
           <div className="css-grid-table-body">
-            {employees.length === 0 ? (
-              <div
-                style={{
-                  gridColumn: '1 / -1',
-                  textAlign: 'center',
-                  padding: '20px',
-                }}
-              >
-                {emptyMessage || '検索条件に該当するユーザが見つかりません。'}
-              </div>
-            ) : (
-              employees.map((employee) => (
-                <React.Fragment key={employee.employeeId}>
-                  <div className="bor-l-none text-center">
-                    <button
-                      type="button"
-                      onClick={() => handleViewDetail(employee.employeeId)}
-                      style={{
-                        color: '#2c7be5',
-                        textDecoration: 'underline',
-                        background: 'none',
-                        border: 'none',
-                        padding: 0,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {employee.employeeId}
-                    </button>
-                  </div>
-                  <div>{employee.employeeName}</div>
-                  <div>{employee.employeeBirthDate || ''}</div>
-                  <div>{employee.departmentName || ''}</div>
-                  <div>{employee.employeeEmail}</div>
-                  <div>{employee.employeeTelephone || ''}</div>
-                  <div>{employee.certificationName || ''}</div>
-                  <div>{employee.endDate || ''}</div>
-                  <div>{employee.score != null ? employee.score : ''}</div>
-                </React.Fragment>
-              ))
-            )}
+            {employees.map((employee) => (
+              <React.Fragment key={employee.employeeId}>
+                <div className="bor-l-none text-center">
+                  <button
+                    type="button"
+                    onClick={() => handleViewDetail(employee.employeeId)}
+                    style={{
+                      color: '#2c7be5',
+                      textDecoration: 'underline',
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {employee.employeeId}
+                  </button>
+                </div>
+                <div>{employee.employeeName}</div>
+                <div>{employee.employeeBirthDate || ''}</div>
+                <div>{employee.departmentName || ''}</div>
+                <div>{employee.employeeEmail}</div>
+                <div>{employee.employeeTelephone || ''}</div>
+                <div>{employee.certificationName || ''}</div>
+                <div>{employee.endDate || ''}</div>
+                <div>{employee.score != null ? employee.score : ''}</div>
+              </React.Fragment>
+            ))}
           </div>
 
           {renderPagination()}

@@ -14,6 +14,7 @@ import {
 } from '@/lib/constants/employee';
 import {
   clearEmployeeAdd,
+  isEmployeeAddSessionForRoute,
   loadEmployeeAdd,
   setEmployeeAddRestore,
   toEmployeeConfirmData,
@@ -38,45 +39,59 @@ export function useADM005() {
   const mode = employeeId ? EMPLOYEE_MODE_EDIT : EMPLOYEE_MODE_ADD;
 
   useEffect(() => {
-    // Hàm để binding dữ liệu từ session lên màn hình confirm.
-    const bindConfirmData = () => {
-      const employeeInfo = loadEmployeeAdd();
-      if (employeeInfo) {
-        const confirmData = toEmployeeConfirmData(employeeInfo);
-        setData(confirmData);
-        setEmployeeData(employeeInfo);
-      }
+    const bindConfirmData = (employeeInfo: EmployeeAdd) => {
+      const confirmData = toEmployeeConfirmData(employeeInfo);
+      setData(confirmData);
+      setEmployeeData(employeeInfo);
+    };
+
+    const redirectByInvalidSession = () => {
+      clearEmployeeAdd();
+      router.push('/employees/system-error');
     };
 
     const loadConfirmData = async () => {
-      //Kiểm tra nếu là mode edit thì gọi API lấy thông tin nhân viên
+      const employeeInfo = loadEmployeeAdd();
+
+      if (!isEmployeeAddSessionForRoute(employeeInfo, mode, employeeId)) {
+        redirectByInvalidSession();
+        return;
+      }
+
       if (mode === EMPLOYEE_MODE_EDIT) {
+        if (!/^\d+$/.test(employeeId)) {
+          redirectByInvalidSession();
+          return;
+        }
+
         try {
           const response = await getEmployeeDetail(employeeId);
-          // Kiểm tra nếu API trả về lỗi hoặc không tồn tại thông tin nhân viên thì chuyển hướng đến trang system error.
           if (response.code !== HTTP_STATUS_OK || !response.employee) {
             router.push('/employees/system-error');
             return;
-          } else {
-            // API thanh cong thi binding data tu MH edit len man hinh confirm.
-            bindConfirmData();
-            return;
           }
+
+          bindConfirmData(employeeInfo);
+          return;
         } catch {
           router.push('/employees/system-error');
           return;
         }
-      } else {
-        // Neu la mode add thi binding data tu session da luu o MH add len man hinh confirm.
-        bindConfirmData();
-        return;
       }
+
+      bindConfirmData(employeeInfo);
     };
 
     loadConfirmData();
   }, [employeeId, mode, router]);
 
   const handleBack = () => {
+    if (!isEmployeeAddSessionForRoute(employeeData, mode, employeeId)) {
+      clearEmployeeAdd();
+      router.push('/employees/system-error');
+      return;
+    }
+
     setEmployeeAddRestore();
 
     if (mode === EMPLOYEE_MODE_EDIT) {

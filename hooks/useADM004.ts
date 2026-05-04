@@ -24,6 +24,7 @@ import {
 import {
   clearEmployeeAdd,
   clearEmployeeAddRestore,
+  isEmployeeAddSessionForRoute,
   loadEmployeeAdd,
   RestoreEmployeeAdd,
   saveEmployeeAdd,
@@ -97,6 +98,14 @@ export function useADM004() {
   const employeeId = searchParams.get('employeeId');
   //Nếu tồn tại ID trong router thì xác định MH là edit, nếu không tồn tại ID trong router là MH add
   const mode = employeeId ? EMPLOYEE_MODE_EDIT : EMPLOYEE_MODE_ADD;
+  const [restoreSession] = useState(() => {
+    const isBackFromConfirm = RestoreEmployeeAdd();
+
+    return {
+      isBackFromConfirm,
+      employeeInfo: isBackFromConfirm ? loadEmployeeAdd() : null,
+    };
+  });
 
   // Khởi tạo react-hook-form cho màn ADM004.
   // validate thay đổi theo mode: nếu là edit thì bỏ validate account/password.
@@ -134,14 +143,10 @@ export function useADM004() {
       }
     };
 
-    //lấy dữ liệu form đã lưu trong sessionStorage 
-    const employeeInfo = loadEmployeeAdd();
-    // cho biết người dùng đang quay lại ADM004 từ màn confirm.
-    const isBackFromConfirm = RestoreEmployeeAdd();
     // Tải dữ liệu chi tiết nhân viên nếu là mode chỉnh sửa, hoặc khôi phục dữ liệu form(sửa lại để mapping với TKMH)
     const loadFormData = async () => {
       // Nếu không phải quay lại từ ADM005 thì xử lý theo mode add/edit hiện tại.
-      if (!isBackFromConfirm) {
+      if (!restoreSession.isBackFromConfirm) {
         // Nếu là mode sửa thì lấy chi tiết nhân viên từ API để bind vào form.
         if (mode === EMPLOYEE_MODE_EDIT && employeeId) {
           if (!/^\d+$/.test(employeeId)) {
@@ -173,16 +178,20 @@ export function useADM004() {
         }
       } else {
         // Nếu quay lại từ ADM005 thì khôi phục dữ liệu form đã nhập trước đó.
-        if (employeeInfo) {
-          reset(toEmployeeFormValues(employeeInfo));
-          clearEmployeeAddRestore();
+        if (!isEmployeeAddSessionForRoute(restoreSession.employeeInfo, mode, employeeId)) {
+          clearEmployeeAdd();
+          router.push('/employees/system-error');
           return;
         }
+
+        reset(toEmployeeFormValues(restoreSession.employeeInfo));
+        clearEmployeeAddRestore();
+        return;
       }
     };
     fetchMasterData();
     loadFormData();
-  }, [employeeId, mode, reset, router]);
+  }, [employeeId, mode, reset, restoreSession, router]);
 
   /**
    * Format message lỗi trả về từ backend theo nội dung hiển thị của hệ thống.

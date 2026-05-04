@@ -8,6 +8,7 @@ import {
   HTTP_STATUS_OK,
 } from '@/lib/constants/employee';
 import {
+  clearEmployeeAdd,
   clearEmployeeAddRestore,
   loadEmployeeAdd,
   RestoreEmployeeAdd,
@@ -23,6 +24,7 @@ jest.mock('@/lib/storage/EmployeeInputForm', () => {
   const actual = jest.requireActual('@/lib/storage/EmployeeInputForm');
   return {
     ...actual,
+    clearEmployeeAdd: jest.fn(),
     clearEmployeeAddRestore: jest.fn(),
     loadEmployeeAdd: jest.fn(),
     RestoreEmployeeAdd: jest.fn(),
@@ -85,8 +87,11 @@ describe('useADM004', () => {
 
   it('restores saved add form data when returning from confirm', async () => {
     const savedData = {
+      mode: 'add' as const,
+      employeeId: '',
       employeeLoginId: 'user01',
       departmentId: '2',
+      departmentName: 'Development',
       employeeName: 'Test User',
       employeeNameKana: 'ﾃｽﾄ',
       employeeBirthDate: '2000/01/01',
@@ -95,6 +100,7 @@ describe('useADM004', () => {
       employeeLoginPassword: 'secret123',
       employeeLoginPasswordConfirm: 'secret123',
       certificationId: '1',
+      certificationName: 'N1',
       certificationStartDate: '2020/01/01',
       certificationEndDate: '2022/01/01',
       score: '850',
@@ -110,6 +116,71 @@ describe('useADM004', () => {
     });
 
     expect(clearEmployeeAddRestore).toHaveBeenCalledTimes(1);
+  });
+
+  it('restores saved edit form data when returning from confirm', async () => {
+    mockSearchParamsGet.mockReturnValue('1');
+    const savedData = {
+      mode: 'edit' as const,
+      employeeId: '1',
+      employeeLoginId: 'user01',
+      departmentId: '2',
+      departmentName: 'Development',
+      employeeName: 'Test User',
+      employeeNameKana: 'ï¾ƒï½½ï¾„',
+      employeeBirthDate: '2000-01-01',
+      employeeEmail: 'test@example.com',
+      employeeTelephone: '0123456789',
+      employeeLoginPassword: '',
+      employeeLoginPasswordConfirm: '',
+      certificationId: '1',
+      certificationName: 'N1',
+      certificationStartDate: '2020-01-01',
+      certificationEndDate: '2022-01-01',
+      score: '850',
+    };
+
+    (RestoreEmployeeAdd as jest.Mock).mockReturnValue(true);
+    (loadEmployeeAdd as jest.Mock).mockReturnValue(savedData);
+
+    const { result } = renderHook(() => useADM004());
+
+    await waitFor(() => {
+      expect(result.current.getValues()).toEqual(toEmployeeFormValues(savedData));
+    });
+
+    expect(getEmployeeDetail).not.toHaveBeenCalled();
+    expect(clearEmployeeAddRestore).toHaveBeenCalledTimes(1);
+  });
+
+  it('redirects to system error when restore flag exists but session data is missing', async () => {
+    (RestoreEmployeeAdd as jest.Mock).mockReturnValue(true);
+    (loadEmployeeAdd as jest.Mock).mockReturnValue(null);
+
+    renderHook(() => useADM004());
+
+    await waitFor(() => {
+      expect(clearEmployeeAdd).toHaveBeenCalledTimes(1);
+      expect(mockPush).toHaveBeenCalledWith('/employees/system-error');
+    });
+  });
+
+  it('redirects to system error when edit restore session does not match route employee id', async () => {
+    mockSearchParamsGet.mockReturnValue('1');
+    (RestoreEmployeeAdd as jest.Mock).mockReturnValue(true);
+    (loadEmployeeAdd as jest.Mock).mockReturnValue({
+      mode: 'edit',
+      employeeId: '2',
+    });
+
+    renderHook(() => useADM004());
+
+    await waitFor(() => {
+      expect(clearEmployeeAdd).toHaveBeenCalledTimes(1);
+      expect(mockPush).toHaveBeenCalledWith('/employees/system-error');
+    });
+
+    expect(getEmployeeDetail).not.toHaveBeenCalled();
   });
 
   it('initializes empty form when there is no restore flag', async () => {

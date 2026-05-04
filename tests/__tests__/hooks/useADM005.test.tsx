@@ -21,6 +21,9 @@ jest.mock('@/lib/api/employee.api', () => ({
 
 jest.mock('@/lib/storage/EmployeeInputForm', () => ({
   clearEmployeeAdd: jest.fn(),
+  isEmployeeAddSessionForRoute:
+    jest.requireActual('@/lib/storage/EmployeeInputForm')
+      .isEmployeeAddSessionForRoute,
   loadEmployeeAdd: jest.fn(),
   setEmployeeAddRestore: jest.fn(),
   toEmployeeConfirmData: jest.fn(),
@@ -134,7 +137,7 @@ describe('useADM005', () => {
     expect(clearEmployeeAdd).not.toHaveBeenCalled();
   });
 
-  it('does not bind confirm data on add route when employee data is missing', async () => {
+  it('redirects to system error on add route when employee data is missing', async () => {
     (loadEmployeeAdd as jest.Mock).mockReturnValue(null);
 
     const { result } = renderHook(() => useADM005());
@@ -144,32 +147,41 @@ describe('useADM005', () => {
     });
 
     expect(result.current.data).toBeNull();
-    expect(mockPush).not.toHaveBeenCalled();
+    expect(clearEmployeeAdd).toHaveBeenCalledTimes(1);
+    expect(mockPush).toHaveBeenCalledWith('/employees/system-error');
   });
 
-  it('checks employee detail but does not bind confirm data on edit route when employee data is missing', async () => {
+  it('redirects to system error on edit route when employee data is missing', async () => {
     mockSearchParamsGet.mockReturnValue('30');
     (loadEmployeeAdd as jest.Mock).mockReturnValue(null);
 
     const { result } = renderHook(() => useADM005());
 
     await waitFor(() => {
-      expect(getEmployeeDetail).toHaveBeenCalledWith('30');
+      expect(loadEmployeeAdd).toHaveBeenCalled();
     });
 
     expect(result.current.data).toBeNull();
-    expect(mockPush).not.toHaveBeenCalled();
+    expect(getEmployeeDetail).not.toHaveBeenCalled();
+    expect(clearEmployeeAdd).toHaveBeenCalledTimes(1);
+    expect(mockPush).toHaveBeenCalledWith('/employees/system-error');
   });
 
-  it('checks employee detail with router employeeId in edit mode', async () => {
+  it('redirects to system error when edit route employeeId is invalid', async () => {
     mockSearchParamsGet.mockReturnValue('abc');
+    (loadEmployeeAdd as jest.Mock).mockReturnValue({
+      ...editData,
+      employeeId: 'abc',
+    });
 
-    const { result } = renderHook(() => useADM005());
+    renderHook(() => useADM005());
 
     await waitFor(() => {
-      expect(getEmployeeDetail).toHaveBeenCalledWith('abc');
-      expect(result.current.data?.employeeLoginId).toBe('user01');
+      expect(mockPush).toHaveBeenCalledWith('/employees/system-error');
     });
+
+    expect(getEmployeeDetail).not.toHaveBeenCalled();
+    expect(clearEmployeeAdd).toHaveBeenCalledTimes(1);
   });
 
   it('loads edit route after checking employee detail exists', async () => {
@@ -211,29 +223,29 @@ describe('useADM005', () => {
     });
   });
 
-  it('binds confirm data after employee detail succeeds even when session mode does not match', async () => {
+  it('redirects to system error when edit route session mode does not match', async () => {
     mockSearchParamsGet.mockReturnValue('30');
 
-    const { result } = renderHook(() => useADM005());
+    renderHook(() => useADM005());
 
     await waitFor(() => {
-      expect(getEmployeeDetail).toHaveBeenCalledWith('30');
-      expect(result.current.data?.employeeLoginId).toBe('user01');
+      expect(mockPush).toHaveBeenCalledWith('/employees/system-error');
     });
 
-    expect(mockPush).not.toHaveBeenCalled();
+    expect(getEmployeeDetail).not.toHaveBeenCalled();
+    expect(clearEmployeeAdd).toHaveBeenCalledTimes(1);
   });
 
-  it('binds confirm data in add mode from saved session data', async () => {
+  it('redirects to system error when add route session mode does not match', async () => {
     (loadEmployeeAdd as jest.Mock).mockReturnValue(editData);
 
-    const { result } = renderHook(() => useADM005());
+    renderHook(() => useADM005());
 
     await waitFor(() => {
-      expect(result.current.data?.employeeLoginId).toBe('user01');
+      expect(mockPush).toHaveBeenCalledWith('/employees/system-error');
     });
 
-    expect(mockPush).not.toHaveBeenCalled();
+    expect(clearEmployeeAdd).toHaveBeenCalledTimes(1);
   });
 
   it('handleBack sets restore flag and navigates back to ADM004 add route', async () => {
