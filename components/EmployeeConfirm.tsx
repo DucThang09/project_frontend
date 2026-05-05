@@ -1,15 +1,21 @@
 'use client';
-//Comment đầu file
+/**
+ * Copyright(C) 2026 Luvina Software Company
+ * EmployeeConfirm.tsx, April 13, 2026 tdthang
+ */
 import { useADM005 } from '@/hooks/useADM005';
 
-//Comment đầu function
+/**
+ * Component hiển thị thông tin nhân viên để người dùng xác nhận trước khi thêm mới hoặc cập nhật 
+ * @returns 
+ */
 export default function EmployeeConfirm() {
   const { data, isSubmitting, handleBack, handleOk } = useADM005();
-
+  // Nếu không có dữ liệu để hiển thị, trả về null (không render gì).
   if (!data) {
     return null;
   }
-
+  // Render thông tin nhân viên và các nút OK, Back để người dùng xác nhận hoặc quay lại màn hình trước đó.
   return (
     <div className="row">
       <form className="c-form box-shadow">

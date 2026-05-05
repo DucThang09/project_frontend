@@ -1,5 +1,8 @@
 'use client';
-//Comment đầu file
+/**
+ * Copyright(C) 2026 Luvina Software Company
+ * useADM002.ts, April 13, 2026 tdthang
+ */
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -34,7 +37,7 @@ export function useEmployeeList() {
     employeeName: string;
     departmentId: string;
   };
-  //Comment
+  // State quản lý danh sách nhân viên, tổng số bản ghi, thông báo rỗng, lỗi phòng ban, điều kiện tìm kiếm đã cam kết, trang hiện tại, thứ tự sắp xếp và danh sách phòng ban.
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
   const [emptyMessage, setEmptyMessage] = useState('');
@@ -58,7 +61,7 @@ export function useEmployeeList() {
   });
   //Tính toán tổng số trang dựa trên tổng số bản ghi và số bản ghi trên mỗi trang.
   const totalPages = Math.ceil(totalRecords / limit);
-
+  // Tính toán danh sách trang hiển thị trong phân trang dựa trên tổng số trang và trang hiện tại.
   const buildEmployeeSearchParams = useCallback((conditions: {
     page: number;
     employeeName: string;
@@ -74,11 +77,11 @@ export function useEmployeeList() {
       ord_certification_name: conditions.ordCertificationName,
       ord_end_date: conditions.ordEndDate,
     };
-
+    // Chỉ thêm điều kiện tìm kiếm vào tham số nếu người dùng đã nhập giá trị để tránh gửi tham số rỗng không cần thiết đến API.
     if (conditions.employeeName) {
       params.employee_name = conditions.employeeName;
     }
-
+    // Chỉ thêm điều kiện phòng ban nếu người dùng đã chọn để tránh gửi tham số rỗng không cần thiết đến API.
     if (conditions.departmentId) {
       params.department_id = Number(conditions.departmentId);
     }
@@ -111,7 +114,7 @@ export function useEmployeeList() {
     setEmployees([]);
     setTotalRecords(0);
     setEmptyMessage('');
-
+    // Tạo tham số tìm kiếm dựa trên điều kiện hiện tại và gọi API lấy danh sách nhân viên.
     try {
       // Tạo tham số mặc định cho API danh sách gồm phân trang và sắp xếp.
       const params = buildEmployeeSearchParams({
@@ -230,7 +233,7 @@ export function useEmployeeList() {
   const getSortIndicator = (field: string) => {
     const defaultIndicator = '▲▽';
     const descendingIndicator = '▼△';
-
+    // Trả về ký hiệu sắp xếp tương ứng với cột được truyền vào dựa trên thứ tự sắp xếp hiện tại của cột đó.
     if (field === 'employee_name') {
       return ordEmployeeName === 'ASC' ? defaultIndicator : descendingIndicator;
     }

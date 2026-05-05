@@ -4,7 +4,8 @@ import { useADM003 } from '@/hooks/useADM003';
 
 //Comment đầu function
 export default function EmployeeDetail() {
-  const { employeeDetail, onEdit, onDelete, onBack, formatDate } = useADM003();
+  const { employeeDetail, handleEdit, handleDelete, handleBack } =
+    useADM003();
 
   if (!employeeDetail) {
     return null;
@@ -33,7 +34,7 @@ export default function EmployeeDetail() {
           </li>
           <li className="form-group row d-flex">
             <label className="col-form-label col-sm-2">生年月日</label>
-            <div className="col-sm col-sm-10">{formatDate(employeeDetail.employeeBirthDate)}</div>
+            <div className="col-sm col-sm-10">{employeeDetail.employeeBirthDate}</div>
           </li>
           <li className="form-group row d-flex">
             <label className="col-form-label col-sm-2">メールアドレス</label>
@@ -50,11 +51,11 @@ export default function EmployeeDetail() {
           </li>
           <li className="form-group row d-flex">
             <label className="col-form-label col-sm-2">資格交付日</label>
-            <div className="col-sm col-sm-10">{formatDate(employeeDetail.certificationStartDate)}</div>
+            <div className="col-sm col-sm-10">{employeeDetail.certificationStartDate}</div>
           </li>
           <li className="form-group row d-flex">
             <label className="col-form-label col-sm-2">失効日</label>
-            <div className="col-sm col-sm-10">{formatDate(employeeDetail.certificationEndDate)}</div>
+            <div className="col-sm col-sm-10">{employeeDetail.certificationEndDate}</div>
           </li>
           <li className="form-group row d-flex">
             <label className="col-form-label col-sm-2">点数</label>
@@ -64,9 +65,9 @@ export default function EmployeeDetail() {
           </li>
           <li className="form-group row d-flex">
             <div className="btn-group col-sm col-sm-10 ml">
-              <button type="button" onClick={onEdit} className="btn btn-primary btn-sm">編集</button>
-              <button type="button" onClick={onDelete} className="btn btn-secondary btn-sm">削除</button>
-              <button type="button" onClick={onBack} className="btn btn-secondary btn-sm">戻る</button>
+              <button type="button" onClick={handleEdit} className="btn btn-primary btn-sm">編集</button>
+              <button type="button" onClick={handleDelete} className="btn btn-secondary btn-sm">削除</button>
+              <button type="button" onClick={handleBack} className="btn btn-secondary btn-sm">戻る</button>
             </div>
           </li>
         </ul>

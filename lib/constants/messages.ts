@@ -1,3 +1,6 @@
+/**
+ * Các thông báo lỗi validation
+ */
 export const VALIDATION_MESSAGES = {
   ER001: '「{0}」を入力してください',
   ER002: '「{0}」を入力してください',
@@ -29,9 +32,16 @@ export const VALIDATION_MESSAGES = {
   MSG004: '削除しますが、よろしいでしょうか。',
   MSG005: '検索条件に該当するユーザが見つかりません。',
 } as const;
-
+/**
+ * 
+ */
 export type ValidationMessageCode = keyof typeof VALIDATION_MESSAGES;
-
+/**
+ * Định dạng thông báo lỗi dựa trên mã lỗi và các tham số truyền vào.
+ * @param code 
+ * @param params 
+ * @returns 
+ */
 export function formatValidationMessage(
   code: ValidationMessageCode,
   ...params: string[]

@@ -8,7 +8,7 @@ jest.mock('react-hook-form', () => {
   const actual = jest.requireActual('react-hook-form');
   return {
     ...actual,
-    Controller: ({ render }: { render: (props: { field: { value: null; onChange: jest.Mock } }) => unknown }) => (
+    Controller: ({ render }: { render: (props: { field: { value: null; onChange: jest.Mock } }) => React.ReactNode }) => (
       <>{render({ field: { value: null, onChange: jest.fn() } })}</>
     ),
   };
@@ -37,8 +37,7 @@ jest.mock('react-datepicker', () => {
 describe('EmployeeInputForm', () => {
   const mockHandleConfirm = jest.fn();
   const mockOnBack = jest.fn();
-  const mockSetValue = jest.fn();
-  const mockClearErrors = jest.fn();
+  const mockHandleCertificationChange = jest.fn().mockResolvedValue(undefined);
   const fieldValues: Record<string, string> = {
     departmentId: '',
     certificationId: '',
@@ -58,8 +57,8 @@ describe('EmployeeInputForm', () => {
     jest.clearAllMocks();
     fieldValues.departmentId = '';
     fieldValues.certificationId = '';
-    mockSetValue.mockReset();
-    mockClearErrors.mockReset();
+    mockHandleCertificationChange.mockReset();
+    mockHandleCertificationChange.mockResolvedValue(undefined);
 
     (useADM004 as jest.Mock).mockReturnValue({
       departments: [
@@ -70,13 +69,13 @@ describe('EmployeeInputForm', () => {
       ],
       register: mockRegister,
       control: mockControl,
-      setValue: mockSetValue,
-      clearErrors: mockClearErrors,
       watch: jest.fn((name: string) => fieldValues[name] ?? ''),
       formState: {
         errors: {},
       },
       mode: EMPLOYEE_MODE_ADD,
+      originalCertification: null,
+      handleCertificationChange: mockHandleCertificationChange,
       handleConfirm: mockHandleConfirm,
       onBack: mockOnBack,
     });
@@ -119,7 +118,7 @@ describe('EmployeeInputForm', () => {
     expect(certificationSelect).toHaveValue('1');
   });
 
-  it('clears dependent certification fields when user clears certification', () => {
+  it('passes empty certification value to hook when user clears certification', () => {
     fieldValues.certificationId = '1';
 
     render(<EmployeeInputForm />);
@@ -129,18 +128,10 @@ describe('EmployeeInputForm', () => {
     fireEvent.change(certificationSelect, { target: { value: '' } });
 
     expect(mockCertificationOnChange).toHaveBeenCalledTimes(1);
-    expect(mockSetValue).toHaveBeenNthCalledWith(1, 'certificationStartDate', null);
-    expect(mockSetValue).toHaveBeenNthCalledWith(2, 'certificationEndDate', null);
-    expect(mockSetValue).toHaveBeenNthCalledWith(3, 'score', '');
-    expect(mockClearErrors).toHaveBeenCalledWith([
-      'certificationId',
-      'certificationStartDate',
-      'certificationEndDate',
-      'score',
-    ]);
+    expect(mockHandleCertificationChange).toHaveBeenCalledWith('');
   });
 
-  it('does not clear dependent certification fields when user selects a certification', () => {
+  it('passes selected certification value to hook when user selects a certification', () => {
     render(<EmployeeInputForm />);
 
     const [, certificationSelect] = screen.getAllByRole('combobox');
@@ -148,8 +139,7 @@ describe('EmployeeInputForm', () => {
     fireEvent.change(certificationSelect, { target: { value: '1' } });
 
     expect(mockCertificationOnChange).toHaveBeenCalledTimes(1);
-    expect(mockSetValue).not.toHaveBeenCalled();
-    expect(mockClearErrors).not.toHaveBeenCalled();
+    expect(mockHandleCertificationChange).toHaveBeenCalledWith('1');
   });
 
   it('disables account and password fields in edit mode', () => {
@@ -158,14 +148,13 @@ describe('EmployeeInputForm', () => {
       certifications: [],
       register: mockRegister,
       control: mockControl,
-      setValue: mockSetValue,
-      clearErrors: mockClearErrors,
-      trigger: jest.fn(),
       watch: jest.fn((name: string) => fieldValues[name] ?? ''),
       formState: {
         errors: {},
       },
       mode: EMPLOYEE_MODE_EDIT,
+      originalCertification: null,
+      handleCertificationChange: mockHandleCertificationChange,
       handleConfirm: mockHandleConfirm,
       onBack: mockOnBack,
     });

@@ -1,5 +1,8 @@
 'use client';
-
+/**
+ * Copyright(C) 2026 Luvina Software Company
+ * useADM005.ts, April 13, 2026 tdthang
+ */
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -26,7 +29,7 @@ import type {
 } from '@/types/employee';
 
 /**
- * Hook xu ly man ADM005.
+ * Quản lý dữ liệu, message và điều hướng
  */
 export function useADM005() {
   const router = useRouter();
@@ -34,10 +37,10 @@ export function useADM005() {
   const [data, setData] = useState<EmployeeConfirmData | null>(null);
   const [employeeData, setEmployeeData] = useState<EmployeeAdd | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  // Lấy employeeId và mode từ URL để xác định đang ở chế độ thêm hay sửa.
   const employeeId = searchParams.get('employeeId') || '';
   const mode = employeeId ? EMPLOYEE_MODE_EDIT : EMPLOYEE_MODE_ADD;
-
+  
   useEffect(() => {
     const bindConfirmData = (employeeInfo: EmployeeAdd) => {
       const confirmData = toEmployeeConfirmData(employeeInfo);

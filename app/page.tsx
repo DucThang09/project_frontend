@@ -1,5 +1,8 @@
 'use client';
-
+/**
+ * Copyright(C) 2026 Luvina Software Company
+ * Home.ts, April 13, 2026 tdthang
+ */
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getToken, isTokenExpired } from '@/lib/auth/token';

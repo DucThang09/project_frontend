@@ -1,5 +1,8 @@
 'use client';
-
+/**
+ * Copyright(C) 2026 Luvina Software Company
+ * useADM006.ts, April 13, 2026 tdthang
+ */
 import { useRouter, useSearchParams } from 'next/navigation';
 import { EMPLOYEE_MODE_EDIT } from '@/lib/constants/employee';
 import {

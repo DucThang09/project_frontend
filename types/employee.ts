@@ -1,7 +1,13 @@
-// Kieu sap xep ho tro o man hinh danh sach.
+/**
+ * Copyright(C) 2026 Luvina Software Company
+ * employee.ts, April 13, 2026 tdthang
+ */
+
 export type SortOrder = 'ASC' | 'DESC';
 
-// Du lieu mot ban ghi nhan vien tra ve tu API danh sach.
+/**
+ * Cấu trúc dữ liệu của một nhân viên trong danh sách trả về từ API.
+ */
 export interface Employee {
   readonly employeeId: number;
   readonly employeeName: string;
@@ -14,13 +20,17 @@ export interface Employee {
   readonly score: number | null;
 }
 
-// Ma message va tham so di kem tu backend.
+/**
+ * Cấu trúc dữ liệu của một phòng ban trả về từ API.
+ */
 export interface ApiMessage {
   readonly code: string;
   readonly params: string[];
 }
 
-// Cau truc response cua API danh sach nhan vien.
+/**
+ * Cấu trúc response của API danh sách nhân viên.
+ */
 export interface EmployeeListApiResponse {
   readonly code: number;
   readonly totalRecords: number;
@@ -28,7 +38,9 @@ export interface EmployeeListApiResponse {
   readonly message?: ApiMessage;
 }
 
-// Du lieu chi tiet cua mot nhan vien tra ve tu API.
+/**
+ * Cấu trúc dữ liệu của chi tiết một nhân viên trả về từ API.
+ */
 export interface EmployeeDetail {
   readonly employeeId: number;
   readonly employeeLoginId: string;
@@ -46,14 +58,18 @@ export interface EmployeeDetail {
   readonly score: number | null;
 }
 
-// Cau truc response cua API chi tiet nhan vien.
+/**
+ * Cấu trúc response của API chi tiết nhân viên.
+ */
 export interface EmployeeDetailApiResponse {
   readonly code: number;
   readonly employee?: EmployeeDetail;
   readonly message?: ApiMessage;
 }
 
-// Dieu kien tim kiem danh sach nhan vien.
+/**
+ * Điều kiện tìm kiếm danh sách nhân viên.
+ */
 export interface EmployeeSearchParams {
   employee_name?: string;
   department_id?: number;
@@ -64,7 +80,9 @@ export interface EmployeeSearchParams {
   limit?: number;
 }
 
-// Du lieu form cho man them/sua nhan vien.
+/**
+ * Dữ liệu form cho màn thêm/sửa nhân viên.
+ */
 export interface EmployeeFormValues {
   employeeLoginId: string;
   departmentId: string;
@@ -81,7 +99,9 @@ export interface EmployeeFormValues {
   score: string;
 }
 
-// Payload gui backend de validate employee input.
+/**
+ * Payload gửi backend để validate dữ liệu nhân viên.
+ */
 export interface EmployeeValidationRequest {
   employeeId?: string;
   employeeLoginId: string;
@@ -99,21 +119,30 @@ export interface EmployeeValidationRequest {
   score: string;
 }
 
-// Cau truc response cua API validate employee input.
+/**
+ * Cấu trúc response của API validate dữ liệu nhân viên.
+ */
 export interface EmployeeValidationApiResponse {
   readonly code: number;
   readonly message?: ApiMessage;
 }
 
+/**
+ * Cấu trúc response của API xóa nhân viên.
+ */
 export interface EmployeeDeleteApiResponse {
   readonly code: number;
   readonly employeeId?: string;
   readonly message?: ApiMessage;
 }
 
-// Du lieu tam luu cua man add truoc khi sang confirm.
+/**
+ * Kiểu dữ liệu cho mode của form nhân viên.
+ */
 export type EmployeeMode = 'add' | 'edit';
-
+/**
+ * Cấu trúc dữ liệu của một nhân viên dùng cho màn hình confirm khi thêm mới nhân viên
+ */
 export interface EmployeeAdd {
   mode: EmployeeMode;
   employeeId: string;
@@ -134,7 +163,9 @@ export interface EmployeeAdd {
   score: string;
 }
 
-// Du lieu hien thi o man confirm add employee.
+/**
+ * Cấu trúc dữ liệu của một nhân viên dùng cho màn hình confirm khi cập nhật nhân viên
+ */
 export interface EmployeeConfirmData {
   employeeLoginId: string;
   departmentName: string;

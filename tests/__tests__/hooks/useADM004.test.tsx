@@ -207,6 +207,123 @@ describe('useADM004', () => {
     });
 
     expect(result.current.getValues().departmentId).toBe('2');
+    expect(result.current.originalCertification).toEqual({
+      certificationId: '1',
+      certificationStartDate: new Date('2020-01-01'),
+      certificationEndDate: new Date('2022-01-01'),
+      score: '850',
+    });
+  });
+
+  it('keeps original certification empty when edit detail has no certification', async () => {
+    mockSearchParamsGet.mockReturnValue('1');
+    (getEmployeeDetail as jest.Mock).mockResolvedValue({
+      code: HTTP_STATUS_OK,
+      employee: {
+        employeeId: 1,
+        employeeLoginId: 'user01',
+        departmentId: 2,
+        departmentName: 'Development',
+        employeeName: 'Test User',
+        employeeNameKana: 'ï¾ƒï½½ï¾„',
+        employeeBirthDate: '2000-01-01',
+        employeeEmail: 'test@example.com',
+        employeeTelephone: '0123456789',
+        certificationId: null,
+        certificationName: null,
+        certificationStartDate: null,
+        certificationEndDate: null,
+        score: null,
+      },
+    });
+
+    const { result } = renderHook(() => useADM004());
+
+    await waitFor(() => {
+      expect(getEmployeeDetail).toHaveBeenCalledWith('1');
+      expect(result.current.originalCertification).toBeNull();
+    });
+  });
+
+  it('clears certification dependent fields when certification is cleared', async () => {
+    const { result } = renderHook(() => useADM004());
+
+    await waitFor(() => {
+      expect(result.current.getValues()).toEqual(createEmployeeEmpty());
+    });
+
+    act(() => {
+      result.current.setValue('certificationId', '1');
+      result.current.setValue('certificationStartDate', new Date('2020-01-01'));
+      result.current.setValue('certificationEndDate', new Date('2022-01-01'));
+      result.current.setValue('score', '850');
+    });
+
+    await act(async () => {
+      await result.current.handleCertificationChange('');
+    });
+
+    expect(result.current.getValues('certificationStartDate')).toBeNull();
+    expect(result.current.getValues('certificationEndDate')).toBeNull();
+    expect(result.current.getValues('score')).toBe('');
+  });
+
+  it('restores original certification fields when original certification is selected again in edit mode', async () => {
+    mockSearchParamsGet.mockReturnValue('1');
+
+    const { result } = renderHook(() => useADM004());
+
+    await waitFor(() => {
+      expect(result.current.originalCertification).toEqual({
+        certificationId: '1',
+        certificationStartDate: new Date('2020-01-01'),
+        certificationEndDate: new Date('2022-01-01'),
+        score: '850',
+      });
+    });
+
+    act(() => {
+      result.current.setValue('certificationId', '');
+      result.current.setValue('certificationStartDate', null);
+      result.current.setValue('certificationEndDate', null);
+      result.current.setValue('score', '');
+    });
+
+    await act(async () => {
+      await result.current.handleCertificationChange('1');
+    });
+
+    expect(result.current.getValues('certificationStartDate')).toEqual(
+      new Date('2020-01-01')
+    );
+    expect(result.current.getValues('certificationEndDate')).toEqual(
+      new Date('2022-01-01')
+    );
+    expect(result.current.getValues('score')).toBe('850');
+  });
+
+  it('clears certification dependent fields when another certification is selected in edit mode', async () => {
+    mockSearchParamsGet.mockReturnValue('1');
+
+    const { result } = renderHook(() => useADM004());
+
+    await waitFor(() => {
+      expect(result.current.getValues('certificationId')).toBe('1');
+    });
+
+    act(() => {
+      result.current.setValue('certificationStartDate', new Date('2020-01-01'));
+      result.current.setValue('certificationEndDate', new Date('2022-01-01'));
+      result.current.setValue('score', '850');
+    });
+
+    await act(async () => {
+      await result.current.handleCertificationChange('2');
+    });
+
+    expect(result.current.getValues('certificationStartDate')).toBeNull();
+    expect(result.current.getValues('certificationEndDate')).toBeNull();
+    expect(result.current.getValues('score')).toBe('');
   });
 
   it('redirects to system error when router edit id is invalid', async () => {

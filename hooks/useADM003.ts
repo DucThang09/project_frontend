@@ -1,15 +1,14 @@
 'use client';
-//Comment đầu file
+/**
+ * Copyright(C) 2026 Luvina Software Company
+ * useADM003.ts, April 13, 2026 tdthang
+ */
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { deleteEmployee, getEmployeeDetail } from '@/lib/api/employee.api';
 import { HTTP_STATUS_OK } from '@/lib/constants/employee';
 import { VALIDATION_MESSAGES } from '@/lib/constants/messages';
 import type { EmployeeDetail } from '@/types/employee';
-
-function formatDate(value: string | null): string {
-  return value ? value.replaceAll('-', '/') : '';
-}
 
 /**
  * Quản lý dữ liệu màn hình chi tiết nhân viên ADM003.
@@ -59,7 +58,7 @@ export function useADM003() {
   /**
    * Điều hướng sang màn hình chỉnh sửa ADM004 với employeeId hiện tại trên URL.
    */
-  const onEdit = () => { //onEdit chuyển thành handleEdit
+  const handleEdit = () => {
     // Nếu chưa có dữ liệu chi tiết thì chuyển sang màn hình system error.
     if (!employeeDetail) {
       router.push('/employees/system-error');
@@ -72,7 +71,7 @@ export function useADM003() {
   /**
    * Xác nhận và xóa nhân viên hiện tại.
    */
-  const onDelete = async () => {
+  const handleDelete = async () => {
     // Không có nhân viên nào để xóa thì chuyển sang màn hình system error.
     if (!employeeDetail) {
       router.push('/employees/system-error');
@@ -105,7 +104,7 @@ export function useADM003() {
   /**
    * Quay lại màn hình danh sách ADM002.
    */
-  const onBack = () => {
+  const handleBack = () => {
     router.push('/employees/adm002');
   };
 
@@ -114,9 +113,8 @@ export function useADM003() {
    */
   return {
     employeeDetail,
-    onEdit,
-    onDelete,
-    onBack,
-    formatDate,
+    handleEdit,
+    handleDelete,
+    handleBack,
   };
 }

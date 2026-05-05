@@ -1,15 +1,22 @@
+/**
+ * Copyright(C) 2026 Luvina Software Company
+ * useADM002.ts, April 13, 2026 tdthang
+ */
 import axios from 'axios';
 import { getToken, removeToken } from '@/lib/auth/token';
-
+// Định nghĩa base URL cho API
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8085';
-
+// Tạo instance của axios với cấu hình mặc định.
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
-
+/**
+ *  
+ * @param client 
+ */
 export function setupInterceptors(client: ReturnType<typeof axios.create>) {
   client.interceptors.request.use(
     (config) => {
@@ -26,7 +33,6 @@ export function setupInterceptors(client: ReturnType<typeof axios.create>) {
       return Promise.reject(error);
     }
   );
-
   client.interceptors.response.use(
     (response) => response,
     (error) => {

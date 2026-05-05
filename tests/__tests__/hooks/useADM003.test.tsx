@@ -126,7 +126,7 @@ describe('useADM003', () => {
     });
 
     act(() => {
-      result.current.onEdit();
+      result.current.handleEdit();
     });
 
     expect(mockPush).toHaveBeenCalledWith('/employees/adm004?employeeId=30');
@@ -145,7 +145,7 @@ describe('useADM003', () => {
     });
 
     await act(async () => {
-      await result.current.onDelete();
+      await result.current.handleDelete();
     });
 
     expect(deleteEmployee).toHaveBeenCalledWith('30');
@@ -161,10 +161,24 @@ describe('useADM003', () => {
     });
 
     await act(async () => {
-      await result.current.onDelete();
+      await result.current.handleDelete();
     });
 
     expect(deleteEmployee).not.toHaveBeenCalled();
+  });
+
+  it('navigates back to employee list page', async () => {
+    const { result } = renderHook(() => useADM003());
+
+    await waitFor(() => {
+      expect(result.current.employeeDetail).toEqual(employeeDetail);
+    });
+
+    act(() => {
+      result.current.handleBack();
+    });
+
+    expect(mockPush).toHaveBeenCalledWith('/employees/adm002');
   });
 
 });

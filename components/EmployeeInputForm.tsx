@@ -14,12 +14,10 @@ export default function EmployeeInputForm() {
     certifications,
     register,
     control,
-    setValue,
-    clearErrors,
-    trigger,
     watch,
     formState: { errors },
     mode,
+    handleCertificationChange,
     handleConfirm,
     onBack,
   } = useADM004();
@@ -49,29 +47,11 @@ export default function EmployeeInputForm() {
 
   const getFieldErrorClassName = () => 'field-error-message';
 
-  const handleCertificationChange = async (
+  const handleCertificationSelectChange = async (
     event: React.ChangeEvent<HTMLSelectElement>
   ) => {
     certificationField.onChange(event);
-
-    if (event.target.value === '') {
-      setValue('certificationStartDate', null);
-      setValue('certificationEndDate', null);
-      setValue('score', '');
-      clearErrors([
-        'certificationId',
-        'certificationStartDate',
-        'certificationEndDate',
-        'score',
-      ]);
-      return;
-    }
-
-    await trigger([
-      'certificationStartDate',
-      'certificationEndDate',
-      'score',
-    ]);
+    await handleCertificationChange(event.target.value);
   };
 
   return (
@@ -154,7 +134,7 @@ export default function EmployeeInputForm() {
                         ref={birthDateRef}
                         placeholderText="yyyy/MM/dd"
                         selected={field.value}
-                        onChange={(date) => field.onChange(date)}
+                        onChange={(date: Date | null) => field.onChange(date)}
                         onBlur={field.onBlur}
                         onKeyDown={preventManualDateInput}
                         dateFormat="yyyy/MM/dd"
@@ -238,7 +218,7 @@ export default function EmployeeInputForm() {
                 name={certificationField.name}
                 ref={certificationField.ref}
                 onBlur={certificationField.onBlur}
-                onChange={handleCertificationChange}
+                onChange={handleCertificationSelectChange}
               >
                 <option value="">選択してください</option>
                 {certifications.map((certification) => (
@@ -267,7 +247,7 @@ export default function EmployeeInputForm() {
                         className={Boolean(errors.certificationStartDate) ? 'field-error-input' : undefined}
                         placeholderText="yyyy/MM/dd"
                         selected={field.value}
-                        onChange={(date) => field.onChange(date)}
+                        onChange={(date: Date | null) => field.onChange(date)}
                         onBlur={field.onBlur}
                         onKeyDown={preventManualDateInput}
                         disabled={!isCertificationSelected}
@@ -298,7 +278,7 @@ export default function EmployeeInputForm() {
                         className={Boolean(errors.certificationEndDate) ? 'field-error-input' : undefined}
                         placeholderText="yyyy/MM/dd"
                         selected={field.value}
-                        onChange={(date) => field.onChange(date)}
+                        onChange={(date: Date | null) => field.onChange(date)}
                         onBlur={field.onBlur}
                         onKeyDown={preventManualDateInput}
                         disabled={!isCertificationSelected}

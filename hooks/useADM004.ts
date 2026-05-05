@@ -1,5 +1,8 @@
 'use client';
-//Comment đầu file
+/**
+ * Copyright(C) 2026 Luvina Software Company
+ * useADM004.ts, April 13, 2026 tdthang
+ */
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -11,6 +14,7 @@ import {
   validateEmployeeInput,
 } from '@/lib/api/employee.api';
 import {
+  EMPLOYEE_FORM_VALIDATION_MODES,
   EMPLOYEE_MODE_ADD,
   EMPLOYEE_MODE_EDIT,
   HTTP_STATUS_OK,
@@ -34,7 +38,7 @@ import {
   toEmployeeFormValues,
   toEmployeeFormValuesFromDetail,
 } from '@/lib/storage/EmployeeInputForm';
-import { createEmployeeInputFormSchema } from '@/lib/validation/EmployeeInputFormSchema';
+import { createEmployeeInputFormSchema } from '@/lib/validation/employees';
 import type { CertificationDTO } from '@/types/certification';
 import type { DepartmentDTO } from '@/types/department';
 import type {
@@ -42,6 +46,13 @@ import type {
   EmployeeFormValues,
   EmployeeValidationRequest,
 } from '@/types/employee';
+
+export interface OriginalCertification {
+  certificationId: string;
+  certificationStartDate: Date | null;
+  certificationEndDate: Date | null;
+  score: string;
+}
 
 // Map label lỗi từ backend sang tên field trong form để set lỗi đúng vị trí.
 const LABEL_TO_FIELD: Partial<Record<string, keyof EmployeeFormValues>> = {
@@ -60,6 +71,12 @@ const LABEL_TO_FIELD: Partial<Record<string, keyof EmployeeFormValues>> = {
   [VALIDATION_LABELS.certificationEndDate]: 'certificationEndDate',
   [VALIDATION_LABELS.score]: 'score',
 };
+
+const CERTIFICATION_DEPENDENT_FIELDS = [
+  'certificationStartDate',
+  'certificationEndDate',
+  'score',
+] as const;
 
 /**
  * Tạo giá trị mặc định rỗng cho form thêm mới nhân viên.
@@ -84,6 +101,15 @@ export function createEmployeeEmpty(): EmployeeFormValues {
   };
 }
 
+function parseApiDate(value: string | null): Date | null {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 /**
  * Quản lý dữ liệu màn hình thêm/sửa nhân viên ADM004.
  *
@@ -94,6 +120,8 @@ export function useADM004() {
   const searchParams = useSearchParams();
   const [departments, setDepartments] = useState<DepartmentDTO[]>([]);
   const [certifications, setCertifications] = useState<CertificationDTO[]>([]);
+  const [originalCertification, setOriginalCertification] =
+    useState<OriginalCertification | null>(null);
   //Kiểm tra xem trong router xem có ID hợp lệ không  
   const employeeId = searchParams.get('employeeId');
   //Nếu tồn tại ID trong router thì xác định MH là edit, nếu không tồn tại ID trong router là MH add
@@ -112,10 +140,11 @@ export function useADM004() {
   const form = useForm<EmployeeFormValues>({
     resolver: zodResolver(createEmployeeInputFormSchema(mode === EMPLOYEE_MODE_EDIT)),
     defaultValues: createEmployeeEmpty(),
-    mode: 'onBlur',
-    reValidateMode: 'onChange',
+    mode: EMPLOYEE_FORM_VALIDATION_MODES.validateMode,
+    reValidateMode: EMPLOYEE_FORM_VALIDATION_MODES.reValidateMode,
   });
-  const { reset, handleSubmit, setError } = form;
+  const { reset, handleSubmit, setError, setValue, clearErrors, trigger } =
+    form;
 
   /**
    * Khởi tạo dữ liệu cho màn hình ADM004.
@@ -124,21 +153,20 @@ export function useADM004() {
    */
   useEffect(() => {
     const fetchMasterData = async () => {
-      // `- Gọi các API list departments, list cerfiticates  để binding data vào các dropdown list (có phần tử rỗng ở đầu)
+      //Gọi các API list departments, list cerfiticates  để binding data vào các dropdown list (có phần tử rỗng ở đầu)
       const [departmentResult, certificationResult] = await Promise.allSettled([
         getDepartments(),
         getCertifications(),
       ]);
-       // TH API thành công thì binding data reponse của các API vào dropdown list
-      if (departmentResult.status === 'fulfilled') {
+      //TH API thành công thì binding data reponse của các API vào dropdown list
+      if (
+        departmentResult.status === 'fulfilled' &&
+        certificationResult.status === 'fulfilled'
+      ) {
         setDepartments(departmentResult.value);
-      } else {
-        setDepartments([]);
-      }
-      // TH API thành công thì binding data reponse của các API vào dropdown list
-      if (certificationResult.status === 'fulfilled') {
         setCertifications(certificationResult.value);
       } else {
+        setDepartments([]);
         setCertifications([]);
       }
     };
@@ -164,6 +192,24 @@ export function useADM004() {
             }
             // Chuyển dữ liệu chi tiết từ API sang format của form và bind vào form.
             reset(toEmployeeFormValuesFromDetail(response.employee));
+            // Lưu thông tin chứng chỉ gốc để so sánh khi validate nếu có thay đổi chứng chỉ.
+            setOriginalCertification(
+              response.employee.certificationId
+                ? {
+                  certificationId: String(response.employee.certificationId),
+                  certificationStartDate: parseApiDate(
+                    response.employee.certificationStartDate
+                  ),
+                  certificationEndDate: parseApiDate(
+                    response.employee.certificationEndDate
+                  ),
+                  score:
+                    response.employee.score != null
+                      ? String(response.employee.score)
+                      : '',
+                }
+                : null
+            );
             return;
           } catch {
             // Lỗi gọi API thì xóa ID đang lưu và chuyển sang màn hình system error.
@@ -173,6 +219,7 @@ export function useADM004() {
         }
         // Nếu là mode thêm mới thì khởi tạo form rỗng.
         if (mode === EMPLOYEE_MODE_ADD) {
+          setOriginalCertification(null);
           reset(createEmployeeEmpty());
           return;
         }
@@ -184,6 +231,7 @@ export function useADM004() {
           return;
         }
 
+        setOriginalCertification(null);
         reset(toEmployeeFormValues(restoreSession.employeeInfo));
         clearEmployeeAddRestore();
         return;
@@ -276,7 +324,7 @@ export function useADM004() {
       mode,
       employeeId
     );
-
+    // Chuyển dữ liệu form sang format của payload validate API.
     return {
       employeeId: employeeInfo.employeeId || undefined,
       employeeLoginId: employeeInfo.employeeLoginId,
@@ -293,6 +341,39 @@ export function useADM004() {
       certificationEndDate: employeeInfo.certificationEndDate,
       score: employeeInfo.score,
     };
+  };
+  // Các field phụ thuộc vào chứng chỉ sẽ được reset nếu chứng chỉ bị bỏ chọn hoặc thay đổi (ở mode edit).
+  const clearCertificationDependentFields = () => {
+    setValue('certificationStartDate', null);
+    setValue('certificationEndDate', null);
+    setValue('score', '');
+  };
+  // Handler khi thay đổi chứng chỉ, sẽ reset các field phụ thuộc nếu bỏ chọn chứng chỉ hoặc thay đổi chứng chỉ ở mode edit.
+  const handleCertificationChange = async (selectedValue: string) => {
+    // Nếu bỏ chọn chứng chỉ thì reset các field phụ thuộc và xóa lỗi liên quan đến chứng chỉ.
+    if (selectedValue === '') {
+      clearCertificationDependentFields();
+      clearErrors(['certificationId', ...CERTIFICATION_DEPENDENT_FIELDS]);
+      return;
+    }
+    // Nếu đang ở mode edit và chứng chỉ được chọn trùng với chứng chỉ gốc thì reset lại giá trị của các field phụ thuộc về giá trị gốc, đồng thời xóa lỗi liên quan đến các field này.
+    if (
+      mode === EMPLOYEE_MODE_EDIT &&
+      originalCertification &&
+      selectedValue === originalCertification.certificationId
+    ) {
+      setValue(
+        'certificationStartDate',
+        originalCertification.certificationStartDate
+      );
+      setValue('certificationEndDate', originalCertification.certificationEndDate);
+      setValue('score', originalCertification.score);
+      clearErrors(CERTIFICATION_DEPENDENT_FIELDS);
+    } else if (mode === EMPLOYEE_MODE_EDIT) {
+      clearCertificationDependentFields();
+    }
+    // Sau khi thay đổi chứng chỉ thì trigger validate cho các field phụ thuộc để cập nhật lỗi nếu có.
+    await trigger(CERTIFICATION_DEPENDENT_FIELDS);
   };
 
   /**
@@ -335,7 +416,7 @@ export function useADM004() {
       //TH edit: Di chuyển về MH view chi tiết (gửi kèm ID qua router)
       router.push(`/employees/adm003?employeeId=${employeeId}`);
       return;
-    }else{
+    } else {
       //TH add mới: Từ màn add về adm002 thì xóa dữ liệu đã lưu trong sessionStorage
       clearEmployeeAdd();
       router.push('/employees/adm002');
@@ -349,8 +430,10 @@ export function useADM004() {
     ...form,
     departments,
     certifications,
+    originalCertification,
     mode,
     employeeId,
+    handleCertificationChange,
     handleConfirm,
     onBack,
   };
