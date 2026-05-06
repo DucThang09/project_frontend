@@ -109,25 +109,38 @@ export const createEmployeeInputFormSchema = (isEditMode = false) => z.object({
 
   // Tên katakana bắt buộc, tối đa 125 ký tự và chỉ cho phép ký tự half-width katakana.
   employeeNameKana: z
-    .string()
-    // Loại bỏ khoảng trắng đầu/cuối để tránh lỗi validate khi người dùng nhập toàn khoảng trắng hoặc có khoảng trắng thừa ở đầu/cuối.
-    .trim()
-    // Kiểm tra không rỗng sau khi trim và tối đa 125 ký tự.
-    .min(1, {
-      message: formatValidationMessage(required, VALIDATION_LABELS.employeeNameKana),
-    })
-    // Kiểm tra tối đa 125 ký tự sau khi trim.
-    .max(EMPLOYEE_VALIDATION_LENGTHS.employeeNameKanaMax, {
-      message: formatValidationMessage(
-        maxLength,
-        VALIDATION_LABELS.employeeNameKana,
-        String(EMPLOYEE_VALIDATION_LENGTHS.employeeNameKanaMax)
-      ),
-    })
-    // Kiểm tra chỉ chứa ký tự half-width katakana sau khi trim.
-    .regex(/^[\uFF66-\uFF9D\uFF9E\uFF9F]+$/, {
-      message: formatValidationMessage(kanaFormat, VALIDATION_LABELS.employeeNameKana),
-    }),
+  .string()
+  .superRefine((value, ctx) => {
+    const trimmedValue = value.trim();
+
+    if (trimmedValue.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: formatValidationMessage(required, VALIDATION_LABELS.employeeNameKana),
+      });
+      return;
+    }
+
+    if (value.length > EMPLOYEE_VALIDATION_LENGTHS.employeeNameKanaMax) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: formatValidationMessage(
+          maxLength,
+          VALIDATION_LABELS.employeeNameKana,
+          String(EMPLOYEE_VALIDATION_LENGTHS.employeeNameKanaMax)
+        ),
+      });
+      return;
+    }
+
+    if (!/^[\uFF66-\uFF9D\uFF9E\uFF9F]+$/.test(trimmedValue)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: formatValidationMessage(kanaFormat, VALIDATION_LABELS.employeeNameKana),
+      });
+    }
+  }),
+
 
   // Ngày sinh bắt buộc. DatePicker trả về Date hoặc null nên cần refine null.
   employeeBirthDate: z
