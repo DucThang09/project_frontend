@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import EmployeeInputForm from '@/components/EmployeeInputForm';
+import EmployeeInputForm from '@/components/adm004';
 import { useADM004 } from '@/hooks/useADM004';
 import { EMPLOYEE_MODE_ADD, EMPLOYEE_MODE_EDIT } from '@/lib/constants/employee';
 

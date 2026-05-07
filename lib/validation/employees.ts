@@ -48,7 +48,7 @@ const employeeLoginIdSchema = z
 // Password phải có độ dài từ 8 đến 50 ký tự.
 // Mode edit sẽ khóa field này
 const employeeLoginPasswordSchema = z
-  
+
   .string()
   // Loại bỏ khoảng trắng đầu/cuối để tránh lỗi validate khi người dùng nhập toàn khoảng trắng hoặc có khoảng trắng thừa ở đầu/cuối.
   .trim()
@@ -109,37 +109,37 @@ export const createEmployeeInputFormSchema = (isEditMode = false) => z.object({
 
   // Tên katakana bắt buộc, tối đa 125 ký tự và chỉ cho phép ký tự half-width katakana.
   employeeNameKana: z
-  .string()
-  .superRefine((value, ctx) => {
-    const trimmedValue = value.trim();
+    .string()
+    .superRefine((value, ctx) => {
+      const trimmedValue = value.trim();
 
-    if (trimmedValue.length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: formatValidationMessage(required, VALIDATION_LABELS.employeeNameKana),
-      });
-      return;
-    }
+      if (trimmedValue.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: formatValidationMessage(required, VALIDATION_LABELS.employeeNameKana),
+        });
+        return;
+      }
 
-    if (value.length > EMPLOYEE_VALIDATION_LENGTHS.employeeNameKanaMax) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: formatValidationMessage(
-          maxLength,
-          VALIDATION_LABELS.employeeNameKana,
-          String(EMPLOYEE_VALIDATION_LENGTHS.employeeNameKanaMax)
-        ),
-      });
-      return;
-    }
+      if (value.length > EMPLOYEE_VALIDATION_LENGTHS.employeeNameKanaMax) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: formatValidationMessage(
+            maxLength,
+            VALIDATION_LABELS.employeeNameKana,
+            String(EMPLOYEE_VALIDATION_LENGTHS.employeeNameKanaMax)
+          ),
+        });
+        return;
+      }
 
-    if (!/^[\uFF66-\uFF9D\uFF9E\uFF9F]+$/.test(trimmedValue)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: formatValidationMessage(kanaFormat, VALIDATION_LABELS.employeeNameKana),
-      });
-    }
-  }),
+      if (!/^[\uFF66-\uFF9D\uFF9E\uFF9F]+$/.test(trimmedValue)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: formatValidationMessage(kanaFormat, VALIDATION_LABELS.employeeNameKana),
+        });
+      }
+    }),
 
 
   // Ngày sinh bắt buộc. DatePicker trả về Date hoặc null nên cần refine null.
@@ -194,8 +194,13 @@ export const createEmployeeInputFormSchema = (isEditMode = false) => z.object({
       ),
     })
     // Kiểm tra chỉ chứa ký tự ASCII sau khi trim để tránh lỗi khi người dùng nhập số điện thoại bằng ký tự full-width.
+    // Ký tự 2 byte / ngoài ASCII thì báo ER008.
     .regex(/^[\x20-\x7E]+$/, {
       message: formatValidationMessage(telephoneFormat, VALIDATION_LABELS.employeeTelephone),
+    })
+    // Ký tự ASCII nhưng không phải số half-width thì báo ER018.
+    .regex(/^[0-9]+$/, {
+      message: formatValidationMessage(halfWidthNumber, VALIDATION_LABELS.employeeTelephone),
     }),
 
   // Password chỉ bắt buộc ở mode add. Mode edit khóa field này.
@@ -273,7 +278,7 @@ export const createEmployeeInputFormSchema = (isEditMode = false) => z.object({
     if (
       values.certificationStartDate !== null &&
       values.certificationEndDate !== null &&
-      values.certificationEndDate < values.certificationStartDate
+      values.certificationEndDate <= values.certificationStartDate
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -289,7 +294,7 @@ export const createEmployeeInputFormSchema = (isEditMode = false) => z.object({
         path: ['score'],
         message: formatValidationMessage(required, VALIDATION_LABELS.score),
       });
-    // Điểm số phải là số nguyên dương.
+      // Điểm số phải là số nguyên dương.
     } else if (!/^[1-9]\d*$/.test(values.score.trim())) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

@@ -4,7 +4,7 @@
  * ADM003.ts, April 13, 2026 tdthang
  */
 import { useAuth } from '@/hooks/useAuth';
-import EmployeeDetail from '@/components/EmployeeDetail';
+import EmployeeDetail from '@/components/adm003';
 
 export default function EmployeeDetailPage() {
   useAuth();

@@ -126,9 +126,10 @@ export function useADM004() {
   const employeeId = searchParams.get('employeeId');
   //Nếu tồn tại ID trong router thì xác định MH là edit, nếu không tồn tại ID trong router là MH add
   const mode = employeeId ? EMPLOYEE_MODE_EDIT : EMPLOYEE_MODE_ADD;
+  // Kiểm tra xem có dữ liệu đã lưu nào trong sessionStorage để restore không, nếu có thì lấy dữ liệu đó để restore vào form, nếu không thì trả về null.
   const [restoreSession] = useState(() => {
     const isBackFromConfirm = RestoreEmployeeAdd();
-
+    // Nếu có dữ liệu restore và dữ liệu đó phù hợp với route hiện tại (add thì không có ID, edit thì có ID trùng với ID trong router) thì trả về dữ liệu đó để restore, nếu không thì xóa dữ liệu restore và trả về null.
     return {
       isBackFromConfirm,
       employeeInfo: isBackFromConfirm ? loadEmployeeAdd() : null,
@@ -143,8 +144,19 @@ export function useADM004() {
     mode: EMPLOYEE_FORM_VALIDATION_MODES.validateMode,
     reValidateMode: EMPLOYEE_FORM_VALIDATION_MODES.reValidateMode,
   });
-  const { reset, handleSubmit, setError, setValue, clearErrors, trigger } =
+
+  const { reset, handleSubmit, setError, setValue, clearErrors, trigger, setFocus } =
     form;
+  // Khi chuyển vào màn hình, nếu là mode edit thì focus vào dropdown phòng ban, nếu là mode add thì focus vào field login ID.
+  useEffect(() => {
+    // Nếu là mode edit thì focus vào dropdown phòng ban
+    if (mode === EMPLOYEE_MODE_EDIT) {
+      setFocus('departmentId');
+      return;
+    }
+    // Nếu là mode add thì focus vào field login ID
+    setFocus('employeeLoginId');
+  }, [mode, setFocus]);
 
   /**
    * Khởi tạo dữ liệu cho màn hình ADM004.
@@ -152,6 +164,7 @@ export function useADM004() {
    * hoặc lấy chi tiết nhân viên khi đang ở mode chỉnh sửa.
    */
   useEffect(() => {
+    // Hàm tải dữ liệu master cho dropdown list.
     const fetchMasterData = async () => {
       //Gọi các API list departments, list cerfiticates  để binding data vào các dropdown list (có phần tử rỗng ở đầu)
       const [departmentResult, certificationResult] = await Promise.allSettled([
@@ -171,17 +184,18 @@ export function useADM004() {
       }
     };
 
-    // Tải dữ liệu chi tiết nhân viên nếu là mode chỉnh sửa, hoặc khôi phục dữ liệu form(sửa lại để mapping với TKMH)
+    // Tải dữ liệu chi tiết nhân viên nếu là mode chỉnh sửa, hoặc khôi phục dữ liệu form
     const loadFormData = async () => {
       // Nếu không phải quay lại từ ADM005 thì xử lý theo mode add/edit hiện tại.
       if (!restoreSession.isBackFromConfirm) {
         // Nếu là mode sửa thì lấy chi tiết nhân viên từ API để bind vào form.
         if (mode === EMPLOYEE_MODE_EDIT && employeeId) {
+          // Nếu ID trong router không phải là chuỗi số hợp lệ thì chuyển sang màn hình system error.
           if (!/^\d+$/.test(employeeId)) {
             router.push('/employees/system-error');
             return;
           }
-
+          // Nếu ID hợp lệ thì gọi API lấy chi tiết nhân viên và bind vào form, nếu có lỗi xảy ra trong quá trình gọi API hoặc dữ liệu trả về không hợp lệ
           try {
             // Gọi API lấy thông tin chi tiết nhân viên cần sửa.
             const response = await getEmployeeDetail(employeeId);
@@ -230,9 +244,11 @@ export function useADM004() {
           router.push('/employees/system-error');
           return;
         }
-
+        // Khôi phục dữ liệu form đã lưu trước đó và xóa dữ liệu trong sessionStorage sau khi khôi phục.
         setOriginalCertification(null);
+        // Chuyển dữ liệu đã lưu sang format của form và bind vào form.
         reset(toEmployeeFormValues(restoreSession.employeeInfo));
+        
         clearEmployeeAddRestore();
         return;
       }
@@ -397,8 +413,11 @@ export function useADM004() {
       mode,
       employeeId
     );
+    // Lưu dữ liệu form vào sessionStorage
     saveEmployeeAdd(employeeInfo);
+    // Chuyển sang màn hình confirm, nếu là edit thì gửi kèm ID qua router để load lại dữ liệu đã lưu, nếu là add load dữ liệu đã lưu mà không cần ID. 
     saveEmployeeConfirmData(toEmployeeConfirmData(employeeInfo));
+    //TH edit: Di chuyển về MH confirm (gửi kèm ID qua router)
     if (mode === EMPLOYEE_MODE_EDIT && employeeId) {
       router.push(`/employees/adm005?employeeId=${employeeId}`);
       return;

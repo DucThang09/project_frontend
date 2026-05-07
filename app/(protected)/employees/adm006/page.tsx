@@ -4,7 +4,7 @@
  * ADM006, April 13, 2026 tdthang
  */
 import { useAuth } from '@/hooks/useAuth';
-import EmployeeComplete from '@/components/EmployeeComplete';
+import EmployeeComplete from '@/components/adm006';
 
 export default function EmployeeCompletePage() {
   useAuth();

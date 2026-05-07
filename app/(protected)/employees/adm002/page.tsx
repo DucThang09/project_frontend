@@ -4,7 +4,7 @@
  * ADM002, April 13, 2026 tdthang
  */
 import { useAuth } from '@/hooks/useAuth';
-import EmployeeList from '@/components/EmployeeList';
+import EmployeeList from '@/components/adm002';
 
 export default function EmployeeListPage() {
   // Xác thực người dùng trước khi hiển thị màn hình danh sách nhân viên.
