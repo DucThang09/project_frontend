@@ -4,9 +4,10 @@ import React from 'react';
 import { useEmployeeList } from '@/hooks/useADM002';
 
 /**
- * Comment function
+ * Component hiển thị danh sách nhân viên với chức năng tìm kiếm, phân trang và sắp xếp. Sử dụng hook useEmployeeList để quản lý dữ liệu và logic liên quan đến danh sách nhân viên.
+ * @returns 
  */
-export default function EmployeeList() {
+export default function adm002() {
   const {
     employees,
     emptyMessage,

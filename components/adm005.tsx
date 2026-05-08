@@ -5,6 +5,10 @@
  */
 import { useADM005 } from '@/hooks/useADM005';
 
+const formatDisplayDate = (value: string | null) => (
+  value ? value.replaceAll('-', '/') : ''
+);
+
 /**
  * Component hiển thị thông tin nhân viên để người dùng xác nhận trước khi thêm mới hoặc cập nhật 
  * @returns 
@@ -42,7 +46,7 @@ export default function EmployeeConfirm() {
           </li>
           <li className="form-group row d-flex">
             <label className="col-form-label col-sm-2">生年月日</label>
-            <div className="col-sm col-sm-10">{data.employeeBirthDate}</div>
+            <div className="col-sm col-sm-10">{formatDisplayDate(data.employeeBirthDate)}</div>
           </li>
           <li className="form-group row d-flex">
             <label className="col-form-label col-sm-2">メールアドレス</label>
@@ -59,11 +63,11 @@ export default function EmployeeConfirm() {
           </li>
           <li className="form-group row d-flex">
             <label className="col-form-label col-sm-2">資格交付日</label>
-            <div className="col-sm col-sm-10">{data.certificationStartDate}</div>
+            <div className="col-sm col-sm-10">{formatDisplayDate(data.certificationStartDate)}</div>
           </li>
           <li className="form-group row d-flex">
             <label className="col-form-label col-sm-2">失効日</label>
-            <div className="col-sm col-sm-10">{data.certificationEndDate}</div>
+            <div className="col-sm col-sm-10">{formatDisplayDate(data.certificationEndDate)}</div>
           </li>
           <li className="form-group row d-flex">
             <label className="col-form-label col-sm-2">点数</label>

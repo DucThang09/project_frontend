@@ -163,19 +163,3 @@ export interface EmployeeAdd {
   score: string;
 }
 
-/**
- * Cấu trúc dữ liệu của một nhân viên dùng cho màn hình confirm khi cập nhật nhân viên
- */
-export interface EmployeeConfirmData {
-  employeeLoginId: string;
-  departmentName: string;
-  employeeName: string;
-  employeeNameKana: string;
-  employeeBirthDate: string;
-  employeeEmail: string;
-  employeeTelephone: string;
-  certificationName: string;
-  certificationStartDate: string;
-  certificationEndDate: string;
-  score: string;
-}

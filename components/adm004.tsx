@@ -59,6 +59,7 @@ export default function EmployeeInputForm() {
       <form className="c-form box-shadow">
         <ul>
           <li className="title">会員情報追加</li>
+          
           <li className="form-group row d-flex">
             <label className="col-form-label col-sm-2"><i className="relative">アカウント名:<span className="note-red">*</span></i></label>
             <div className="col-sm col-sm-10">

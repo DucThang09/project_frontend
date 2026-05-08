@@ -65,7 +65,6 @@ jest.mock('@/lib/api/employee.api', () => {
 
 jest.mock('@/lib/storage/EmployeeInputForm', () => ({
   clearEmployeeAdd: jest.fn(),
-  clearEmployeeAddRestore: jest.fn(),
   RestoreEmployeeAdd: jest.fn().mockReturnValue(false),
   createEmptyEmployeeFormValues: () => ({
     employeeLoginId: '',
@@ -101,23 +100,8 @@ jest.mock('@/lib/storage/EmployeeInputForm', () => ({
     certificationEndDate: '2022-01-01',
     score: '850',
   }),
-  loadEmployeeConfirmData: jest.fn().mockReturnValue({
-    employeeLoginId: 'user01',
-    departmentName: 'Development',
-    employeeName: 'Test User',
-    employeeNameKana: 'TEST USER',
-    employeeBirthDate: '2000-01-01',
-    employeeEmail: 'test@example.com',
-    employeeTelephone: '0123456789',
-    certificationName: 'N1',
-    certificationStartDate: '2020-01-01',
-    certificationEndDate: '2022-01-01',
-    score: '850',
-  }),
   saveEmployeeAdd: jest.fn(),
-  saveEmployeeConfirmData: jest.fn(),
   toEmployeeAdd: jest.fn(),
-  toEmployeeConfirmData: jest.fn(),
   toEmployeeFormValues: jest.fn(),
   toEmployeeFormValuesFromDetail: jest.fn().mockReturnValue({
     employeeLoginId: 'user01',

@@ -27,14 +27,11 @@ import {
 } from '@/lib/constants/messages';
 import {
   clearEmployeeAdd,
-  clearEmployeeAddRestore,
   isEmployeeAddSessionForRoute,
   loadEmployeeAdd,
   RestoreEmployeeAdd,
   saveEmployeeAdd,
-  saveEmployeeConfirmData,
   toEmployeeAdd,
-  toEmployeeConfirmData,
   toEmployeeFormValues,
   toEmployeeFormValuesFromDetail,
 } from '@/lib/storage/EmployeeInputForm';
@@ -249,7 +246,7 @@ export function useADM004() {
         // Chuyển dữ liệu đã lưu sang format của form và bind vào form.
         reset(toEmployeeFormValues(restoreSession.employeeInfo));
         
-        clearEmployeeAddRestore();
+        clearEmployeeAdd();
         return;
       }
     };
@@ -415,8 +412,6 @@ export function useADM004() {
     );
     // Lưu dữ liệu form vào sessionStorage
     saveEmployeeAdd(employeeInfo);
-    // Chuyển sang màn hình confirm, nếu là edit thì gửi kèm ID qua router để load lại dữ liệu đã lưu, nếu là add load dữ liệu đã lưu mà không cần ID. 
-    saveEmployeeConfirmData(toEmployeeConfirmData(employeeInfo));
     //TH edit: Di chuyển về MH confirm (gửi kèm ID qua router)
     if (mode === EMPLOYEE_MODE_EDIT && employeeId) {
       router.push(`/employees/adm005?employeeId=${employeeId}`);

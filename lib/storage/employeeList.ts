@@ -6,7 +6,9 @@ const EMPLOYEE_LIST_STATE_KEY = 'employee-list-state';
 // Các trường sắp xếp trong danh sách nhân viên
 export type EmployeeListSortField = 'employee_name' | 'certification_name' | 'end_date';
 
-
+/**
+ * 
+ */
 export interface EmployeeListState {
   employeeName: string;       
   departmentId: string;      

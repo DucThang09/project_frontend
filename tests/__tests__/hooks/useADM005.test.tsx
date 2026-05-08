@@ -10,7 +10,6 @@ import {
   clearEmployeeAdd,
   loadEmployeeAdd,
   setEmployeeAddRestore,
-  toEmployeeConfirmData,
 } from '@/lib/storage/EmployeeInputForm';
 
 jest.mock('@/lib/api/employee.api', () => ({
@@ -26,7 +25,6 @@ jest.mock('@/lib/storage/EmployeeInputForm', () => ({
       .isEmployeeAddSessionForRoute,
   loadEmployeeAdd: jest.fn(),
   setEmployeeAddRestore: jest.fn(),
-  toEmployeeConfirmData: jest.fn(),
 }));
 
 jest.mock('next/navigation', () => ({
@@ -37,20 +35,6 @@ jest.mock('next/navigation', () => ({
 const mockPush = jest.fn();
 const mockReplace = jest.fn();
 const mockSearchParamsGet = jest.fn();
-
-const confirmData = {
-  employeeLoginId: 'user01',
-  departmentName: 'Development',
-  employeeName: 'Test User',
-  employeeNameKana: 'TEST USER',
-  employeeBirthDate: '2000/01/01',
-  employeeEmail: 'test@example.com',
-  employeeTelephone: '0123456789',
-  certificationName: 'N1',
-  certificationStartDate: '2020/01/01',
-  certificationEndDate: '2022/01/01',
-  score: '850',
-};
 
 const addData = {
   mode: 'add' as const,
@@ -116,7 +100,6 @@ describe('useADM005', () => {
 
     mockSearchParamsGet.mockReturnValue(null);
     (loadEmployeeAdd as jest.Mock).mockReturnValue(addData);
-    (toEmployeeConfirmData as jest.Mock).mockReturnValue(confirmData);
     (addEmployee as jest.Mock).mockResolvedValue({ code: HTTP_STATUS_OK });
     (updateEmployee as jest.Mock).mockResolvedValue({ code: HTTP_STATUS_OK });
     (getEmployeeDetail as jest.Mock).mockResolvedValue({

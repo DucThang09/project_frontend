@@ -9,11 +9,9 @@ import {
 } from '@/lib/constants/employee';
 import {
   clearEmployeeAdd,
-  clearEmployeeAddRestore,
   loadEmployeeAdd,
   RestoreEmployeeAdd,
   saveEmployeeAdd,
-  saveEmployeeConfirmData,
   toEmployeeFormValues,
 } from '@/lib/storage/EmployeeInputForm';
 
@@ -25,11 +23,9 @@ jest.mock('@/lib/storage/EmployeeInputForm', () => {
   return {
     ...actual,
     clearEmployeeAdd: jest.fn(),
-    clearEmployeeAddRestore: jest.fn(),
     loadEmployeeAdd: jest.fn(),
     RestoreEmployeeAdd: jest.fn(),
     saveEmployeeAdd: jest.fn(),
-    saveEmployeeConfirmData: jest.fn(),
   };
 });
 jest.mock('next/navigation', () => ({
@@ -115,7 +111,7 @@ describe('useADM004', () => {
       expect(result.current.getValues()).toEqual(toEmployeeFormValues(savedData));
     });
 
-    expect(clearEmployeeAddRestore).toHaveBeenCalledTimes(1);
+    expect(clearEmployeeAdd).toHaveBeenCalledTimes(1);
   });
 
   it('restores saved edit form data when returning from confirm', async () => {
@@ -127,7 +123,7 @@ describe('useADM004', () => {
       departmentId: '2',
       departmentName: 'Development',
       employeeName: 'Test User',
-      employeeNameKana: 'ï¾ƒï½½ï¾„',
+      employeeNameKana: 'TEST USER',
       employeeBirthDate: '2000-01-01',
       employeeEmail: 'test@example.com',
       employeeTelephone: '0123456789',
@@ -150,7 +146,7 @@ describe('useADM004', () => {
     });
 
     expect(getEmployeeDetail).not.toHaveBeenCalled();
-    expect(clearEmployeeAddRestore).toHaveBeenCalledTimes(1);
+    expect(clearEmployeeAdd).toHaveBeenCalledTimes(1);
   });
 
   it('redirects to system error when restore flag exists but session data is missing', async () => {
@@ -191,7 +187,6 @@ describe('useADM004', () => {
     });
 
     expect(saveEmployeeAdd).not.toHaveBeenCalled();
-    expect(saveEmployeeConfirmData).not.toHaveBeenCalled();
   });
 
   it('loads detail data when opened in edit mode without restore flag', async () => {
@@ -400,19 +395,6 @@ describe('useADM004', () => {
     });
 
     expect(saveEmployeeAdd).toHaveBeenCalledTimes(1);
-    expect(saveEmployeeConfirmData).toHaveBeenCalledWith({
-      employeeLoginId: 'user01',
-      departmentName: 'Development',
-      employeeName: 'Test User',
-      employeeNameKana: 'ﾃｽﾄ',
-      employeeBirthDate: '2000/01/01',
-      employeeEmail: 'test@example.com',
-      employeeTelephone: '0123456789',
-      certificationName: 'N1',
-      certificationStartDate: '2020/01/01',
-      certificationEndDate: '2022/01/01',
-      score: '850',
-    });
     expect(mockPush).toHaveBeenCalledWith('/employees/adm005');
   });
 
@@ -443,7 +425,6 @@ describe('useADM004', () => {
     });
 
     expect(saveEmployeeAdd).toHaveBeenCalledTimes(1);
-    expect(saveEmployeeConfirmData).toHaveBeenCalledTimes(1);
     expect(mockPush).toHaveBeenCalledWith('/employees/adm005?employeeId=1');
   });
 
@@ -491,7 +472,6 @@ describe('useADM004', () => {
     });
 
     expect(saveEmployeeAdd).not.toHaveBeenCalled();
-    expect(saveEmployeeConfirmData).not.toHaveBeenCalled();
     expect(mockPush).not.toHaveBeenCalledWith('/employees/adm005');
   });
 

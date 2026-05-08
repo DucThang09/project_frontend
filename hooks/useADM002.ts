@@ -61,7 +61,7 @@ export function useEmployeeList() {
   });
   //Tính toán tổng số trang dựa trên tổng số bản ghi và số bản ghi trên mỗi trang.
   const totalPages = Math.ceil(totalRecords / limit);
-  // Tính toán danh sách trang hiển thị trong phân trang dựa trên tổng số trang và trang hiện tại.
+  // Hàm để xây dựng tham số tìm kiếm cho API dựa trên điều kiện hiện tại, chỉ thêm điều kiện nếu người dùng đã nhập hoặc chọn để tránh gửi tham số rỗng không cần thiết.
   const buildEmployeeSearchParams = useCallback((conditions: {
     page: number;
     employeeName: string;
@@ -70,7 +70,7 @@ export function useEmployeeList() {
     ordCertificationName: SortOrder;
     ordEndDate: SortOrder;
   }): EmployeeSearchParams => {
-    const params: EmployeeSearchParams = {
+    const params: EmployeeSearchParams = {// Tính toán offset dựa trên trang hiện tại và số bản ghi trên mỗi trang để phân trang.
       offset: (conditions.page - 1) * limit,
       limit,
       ord_employee_name: conditions.ordEmployeeName,
@@ -114,6 +114,7 @@ export function useEmployeeList() {
     setEmployees([]);
     setTotalRecords(0);
     setEmptyMessage('');
+
     // Tạo tham số tìm kiếm dựa trên điều kiện hiện tại và gọi API lấy danh sách nhân viên.
     try {
       // Tạo tham số mặc định cho API danh sách gồm phân trang và sắp xếp.
@@ -140,6 +141,7 @@ export function useEmployeeList() {
             : ''
         );
       } else {
+
         // API trả code lỗi thì xóa dữ liệu danh sách để tránh hiển thị dữ liệu cũ.
         setEmployees([]);
         setTotalRecords(0);
@@ -170,7 +172,7 @@ export function useEmployeeList() {
   }, [fetchEmployees]);
 
   /**
-   * Tải danh sách phòng ban khi màn hình được mount.
+   * Tải danh sách phòng ban khi component mount để có dữ liệu hiển thị trong combobox tìm kiếm.
    */
   useEffect(() => {
     fetchDepartments();
@@ -256,6 +258,7 @@ export function useEmployeeList() {
    */
   const paginationPages = useMemo(() => {
     if (totalPages <= 1) {
+      // Nếu chỉ có 1 trang hoặc không có trang nào, không hiển thị phân trang.
       return [];
     }
     // Nếu tổng số trang nhỏ hơn hoặc bằng 5 thì hiển thị tất cả các trang.
