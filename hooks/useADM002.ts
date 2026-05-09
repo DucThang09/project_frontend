@@ -38,10 +38,10 @@ export function useEmployeeList() {
     departmentId: string;
   };
   // State quản lý danh sách nhân viên, tổng số bản ghi, thông báo rỗng, lỗi phòng ban, điều kiện tìm kiếm đã cam kết, trang hiện tại, thứ tự sắp xếp và danh sách phòng ban.
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [totalRecords, setTotalRecords] = useState(0);
-  const [emptyMessage, setEmptyMessage] = useState('');
-  const [departmentErrorMessage, setDepartmentErrorMessage] = useState('');
+  const [employees, setEmployees] = useState<Employee[]>([]);// Danh sách nhân viên hiển thị trên màn hình.
+  const [totalRecords, setTotalRecords] = useState(0);// Tổng số bản ghi nhân viên theo điều kiện tìm kiếm hiện tại, dùng để tính toán phân trang.
+  const [emptyMessage, setEmptyMessage] = useState('');// Thông báo khi không có nhân viên nào theo điều kiện tìm kiếm, hoặc lỗi khi gọi API.
+  const [departmentErrorMessage, setDepartmentErrorMessage] = useState('');// Thông báo lỗi khi không lấy được danh sách phòng ban để hiển thị trong combobox tìm kiếm.
   const [committedName, setCommittedName] = useState(restoredListState?.employeeName ?? '');
   const [committedGroup, setCommittedGroup] = useState(restoredListState?.departmentId ?? '');
   const [currentPage, setCurrentPage] = useState(restoredListState?.currentPage ?? 1);
@@ -61,34 +61,6 @@ export function useEmployeeList() {
   });
   //Tính toán tổng số trang dựa trên tổng số bản ghi và số bản ghi trên mỗi trang.
   const totalPages = Math.ceil(totalRecords / limit);
-  // Hàm để xây dựng tham số tìm kiếm cho API dựa trên điều kiện hiện tại, chỉ thêm điều kiện nếu người dùng đã nhập hoặc chọn để tránh gửi tham số rỗng không cần thiết.
-  const buildEmployeeSearchParams = useCallback((conditions: {
-    page: number;
-    employeeName: string;
-    departmentId: string;
-    ordEmployeeName: SortOrder;
-    ordCertificationName: SortOrder;
-    ordEndDate: SortOrder;
-  }): EmployeeSearchParams => {
-    const params: EmployeeSearchParams = {// Tính toán offset dựa trên trang hiện tại và số bản ghi trên mỗi trang để phân trang.
-      offset: (conditions.page - 1) * limit,
-      limit,
-      ord_employee_name: conditions.ordEmployeeName,
-      ord_certification_name: conditions.ordCertificationName,
-      ord_end_date: conditions.ordEndDate,
-    };
-    // Chỉ thêm điều kiện tìm kiếm vào tham số nếu người dùng đã nhập giá trị để tránh gửi tham số rỗng không cần thiết đến API.
-    if (conditions.employeeName) {
-      params.employee_name = conditions.employeeName;
-    }
-    // Chỉ thêm điều kiện phòng ban nếu người dùng đã chọn để tránh gửi tham số rỗng không cần thiết đến API.
-    if (conditions.departmentId) {
-      params.department_id = Number(conditions.departmentId);
-    }
-
-    return params;
-  }, [limit]);
-
   /**
    * Lấy danh sách phòng ban để hiển thị trong combobox tìm kiếm.
    *
@@ -118,14 +90,23 @@ export function useEmployeeList() {
     // Tạo tham số tìm kiếm dựa trên điều kiện hiện tại và gọi API lấy danh sách nhân viên.
     try {
       // Tạo tham số mặc định cho API danh sách gồm phân trang và sắp xếp.
-      const params = buildEmployeeSearchParams({
-        page: currentPage,
-        employeeName: committedName,
-        departmentId: committedGroup,
-        ordEmployeeName,
-        ordCertificationName,
-        ordEndDate,
-      });
+      const params: EmployeeSearchParams = {
+        offset: (currentPage - 1) * limit,
+        limit,
+        ord_employee_name: ordEmployeeName,
+        ord_certification_name: ordCertificationName,
+        ord_end_date: ordEndDate,
+      };
+
+      // Chỉ thêm điều kiện tìm kiếm vào tham số nếu người dùng đã nhập giá trị để tránh gửi tham số rỗng không cần thiết đến API.
+      if (committedName) {
+        params.employee_name = committedName;
+      }
+
+      // Chỉ thêm điều kiện phòng ban nếu người dùng đã chọn để tránh gửi tham số rỗng không cần thiết đến API.
+      if (committedGroup) {
+        params.department_id = Number(committedGroup);
+      }
 
       // Gọi API lấy danh sách nhân viên theo điều kiện hiện tại.
       const data = await getEmployees(params);
@@ -158,7 +139,7 @@ export function useEmployeeList() {
     currentPage,
     committedName,
     committedGroup,
-    buildEmployeeSearchParams,
+    limit,
     ordEmployeeName,
     ordCertificationName,
     ordEndDate,
@@ -205,8 +186,6 @@ export function useEmployeeList() {
   const toggleSortOrder = (value: SortOrder): SortOrder => (
     value === 'ASC' ? 'DESC' : 'ASC'
   );
-
-
 
   /**
    * Thay đổi thứ tự sắp xếp theo cột được chọn.

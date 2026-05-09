@@ -124,6 +124,7 @@ export interface EmployeeValidationRequest {
  */
 export interface EmployeeValidationApiResponse {
   readonly code: number;
+  readonly employeeId?: number;
   readonly message?: ApiMessage;
 }
 
