@@ -10,16 +10,16 @@ const formatDisplayDate = (value: string | null) => (
 );
 
 /**
- * Component hiển thị thông tin nhân viên để người dùng xác nhận trước khi thêm mới hoặc cập nhật 
- * @returns 
+ * Component hiển thị thông tin nhân viên để người dùng xác nhận trước khi thêm mới hoặc cập nhật.
+ * @returns Giao diện xác nhận thông tin nhân viên.
  */
 export default function EmployeeConfirm() {
   const { data, isSubmitting, handleBack, handleOk } = useADM005();
-  // Nếu không có dữ liệu để hiển thị, trả về null (không render gì).
+  // Nếu không có dữ liệu để hiển thị, trả về null.
   if (!data) {
     return null;
   }
-  // Render thông tin nhân viên và các nút OK, Back để người dùng xác nhận hoặc quay lại màn hình trước đó.
+  // Render thông tin nhân viên và các nút OK, Back để xác nhận hoặc quay lại màn hình trước đó.
   return (
     <div className="row">
       <form className="c-form box-shadow">

@@ -87,7 +87,7 @@ export function toEmployeeFormValues(data: EmployeeAdd): EmployeeFormValues {
   };
 }
 
-// Chuyen data chi tiet nhan vien tu API thanh du lieu form de bind o man sua.
+// Chuyển dữ liệu chi tiết nhân viên từ API thành dữ liệu form để bind ở màn sửa.
 export function toEmployeeFormValuesFromDetail(
   data: EmployeeDetail
 ): EmployeeFormValues {

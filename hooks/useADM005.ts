@@ -27,7 +27,7 @@ import type {
 } from '@/types/employee';
 
 /**
- * Quản lý dữ liệu, message và điều hướng
+ * Quản lý dữ liệu, message và điều hướng của màn hình xác nhận ADM005.
  */
 export function useADM005() {
   const router = useRouter();
@@ -39,11 +39,12 @@ export function useADM005() {
   const employeeId = searchParams.get('employeeId') || '';
   const mode = employeeId ? EMPLOYEE_MODE_EDIT : EMPLOYEE_MODE_ADD;
   /** 
-   * Load dữ liệu xác nhận từ session storage khi component mount. Nếu dữ liệu không hợp lệ hoặc không tồn tại, chuyển hướng đến trang lỗi hệ thống.
-   * Nếu đang ở chế độ sửa, gọi API để lấy chi tiết nhân viên và kết hợp với dữ liệu từ session storage để hiển thị thông tin xác nhận. Nếu có lỗi chuyển hướng đến trang lỗi hệ thống.
+   * Load dữ liệu xác nhận từ session storage khi component mount.
+   * Nếu dữ liệu không hợp lệ hoặc không tồn tại thì chuyển hướng đến trang lỗi hệ thống.
+   * Nếu đang ở chế độ sửa, gọi API lấy chi tiết nhân viên và kết hợp với dữ liệu session.
    */
   useEffect(() => {
-    // Hàm để gán dữ liệu xác nhận và thông tin nhân viên vào state.
+    // Gán dữ liệu xác nhận và thông tin nhân viên vào state.
     const bindConfirmData = (employeeInfo: EmployeeAdd) => {
       setData(employeeInfo);
       setEmployeeData(employeeInfo);
@@ -53,40 +54,40 @@ export function useADM005() {
       clearEmployeeAdd();
       router.push('/employees/system-error');
     };
-    // Hàm để load dữ liệu xác nhận. Nếu đang ở chế độ sửa, gọi API để lấy chi tiết nhân viên và kết hợp với dữ liệu từ session storage. Nếu có lỗi chuyển hướng đến trang lỗi hệ thống.
+    // Load dữ liệu xác nhận; mode sửa sẽ kiểm tra thêm dữ liệu chi tiết từ API.
     const loadConfirmData = async () => {
       const employeeInfo = loadEmployeeAdd();
-      // Kiểm tra nếu không có dữ liệu trong session hoặc dữ liệu không hợp lệ cho route hiện tại thì chuyển hướng đến trang lỗi hệ thống.
+      // Dữ liệu session phải tồn tại và phù hợp với route hiện tại.
       if (!isEmployeeAddSessionForRoute(employeeInfo, mode, employeeId)) {
         redirectByInvalidSession();
         return;
       }
-      // Nếu đang ở chế độ sửa, gọi API để lấy chi tiết nhân viên và kết hợp với dữ liệu từ session storage. Nếu có lỗi chuyển hướng đến trang lỗi hệ thống.
+      // Mode sửa cần kiểm tra employeeId và dữ liệu chi tiết trước khi hiển thị confirm.
       if (mode === EMPLOYEE_MODE_EDIT) {
         if (!/^\d+$/.test(employeeId)) {
           redirectByInvalidSession();
           return;
         }
-        // Gọi API để lấy chi tiết nhân viên. Nếu có lỗi hoặc không có dữ liệu nhân viên trả về, chuyển hướng đến trang lỗi hệ thống. Nếu thành công, gán dữ liệu xác nhận và thông tin nhân viên vào state.
+        // Gọi API lấy chi tiết nhân viên; lỗi hoặc thiếu dữ liệu sẽ chuyển sang system error.
         try {
           const response = await getEmployeeDetail(employeeId);
-          // Nếu mã trạng thái không phải là OK hoặc không có dữ liệu nhân viên trả về, chuyển hướng đến trang lỗi hệ thống.
+          // Mã trạng thái không OK hoặc thiếu employee thì không thể confirm.
           if (response.code !== HTTP_STATUS_OK || !response.employee) {
             router.push('/employees/system-error');
             return;
           }
-          // Nếu có thì lấy dữ liệu từ session storage để hiển thị thông tin xác nhận.
           bindConfirmData(employeeInfo);
           return;
-        } catch {// Nếu có lỗi khi gọi API, chuyển hướng đến trang lỗi hệ thống.
+        } catch {
+          // Lỗi khi gọi API sẽ chuyển hướng đến trang lỗi hệ thống.
           router.push('/employees/system-error');
           return;
         }
       }
-      // Nếu đang ở chế độ thêm, gán dữ liệu xác nhận và thông tin nhân viên từ session storage vào state để hiển thị thông tin xác nhận.
+      // Mode thêm dùng trực tiếp dữ liệu xác nhận từ session storage.
       bindConfirmData(employeeInfo);
     };
-    // Gọi hàm loadConfirmData khi component mount.
+    // Gọi loadConfirmData khi component mount.
     loadConfirmData();
   }, [employeeId, mode, router]);
 
@@ -126,23 +127,21 @@ export function useADM005() {
     score: employeeInfo.score,
   });
   /**
-   * Xử lý sự kiện khi nhấn nút "OK" trên màn hình xác nhận. 
-   * @returns 
+   * Xử lý sự kiện khi nhấn nút OK trên màn hình xác nhận.
    */
   const handleOk = async () => {
     if (!employeeData || isSubmitting) {
       return;
     }
-    
+
     setIsSubmitting(true);
-    //
     try {
       const payload = toValidationRequest(employeeData);
       const response =
         mode === EMPLOYEE_MODE_EDIT && employeeId
           ? await updateEmployee(employeeId, payload)
           : await addEmployee(payload);
-      // Nếu mã trạng thái trả về không phải là OK, chuyển hướng đến trang lỗi hệ thống.
+      // Mã trạng thái trả về không OK thì chuyển hướng đến trang lỗi hệ thống.
       if (response.code !== HTTP_STATUS_OK) {
         router.push('/employees/system-error');
         return;
@@ -151,7 +150,8 @@ export function useADM005() {
     } catch {
       router.push('/employees/system-error');
     } finally {
-      clearEmployeeAdd();// Xóa dữ liệu tạm của luồng add/edit sau khi submit.
+      // Xóa dữ liệu tạm của luồng add/edit sau khi submit.
+      clearEmployeeAdd();
       setIsSubmitting(false);
     }
   };
